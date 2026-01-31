@@ -1,0 +1,275 @@
+{{extend 'layout_gentelella_bs5.html'}}
+
+{{block header}}
+{{if breadcrumbs:}}
+<nav aria-label="breadcrumb" class="mb-2">
+  <ol class="breadcrumb mb-0">
+    {{for crumb in breadcrumbs:}}
+    {{if crumb['url']:}}
+    <li class="breadcrumb-item"><a href="{{=crumb['url']}}">{{=crumb['label']}}</a></li>
+    {{else:}}
+    <li class="breadcrumb-item active" aria-current="page">{{=crumb['label']}}</li>
+    {{pass}}
+    {{pass}}
+  </ol>
+</nav>
+{{pass}}
+{{end}}
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <!-- Информация о клиенте -->
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-info-circle"></i> Информация о клиенте</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless">
+            <tr>
+              <th width="40%">Имя:</th>
+              <td>{{=customer.name}}</td>
+            </tr>
+            {{if customer.phone:}}
+            <tr>
+              <th>Телефон:</th>
+              <td><a href="tel:{{=customer.phone}}">{{=customer.phone}}</a></td>
+            </tr>
+            {{pass}}
+            {{if customer.email:}}
+            <tr>
+              <th>Email:</th>
+              <td><a href="mailto:{{=customer.email}}">{{=customer.email}}</a></td>
+            </tr>
+            {{pass}}
+            {{if customer.address:}}
+            <tr>
+              <th>Адрес:</th>
+              <td>{{=customer.address}}</td>
+            </tr>
+            {{pass}}
+            {{if customer.notes:}}
+            <tr>
+              <th>Примечания:</th>
+              <td>{{=customer.notes}}</td>
+            </tr>
+            {{pass}}
+            <tr>
+              <th>Дата создания:</th>
+              <td>{{=customer.created_on.strftime('%d.%m.%Y %H:%M') if customer.created_on else '-'}}</td>
+            </tr>
+            <tr>
+              <th>Дата изменения:</th>
+              <td>{{=customer.modified_on.strftime('%d.%m.%Y %H:%M') if customer.modified_on else '-'}}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Проекты клиента -->
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-folder"></i> Проекты клиента</h5>
+          <button type="button" class="btn btn-light btn-sm" onclick="openProjectSidebar()">
+            <i class="bi bi-plus"></i> Добавить проект
+          </button>
+        </div>
+        <div class="card-body">
+          {{if projects:}}
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Номер проекта</th>
+                  <th>Название</th>
+                  <th>Статус</th>
+                  <th>Бюджет</th>
+                  <th>Дата начала</th>
+                  <th>Дата окончания</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{for project in projects:}}
+                <tr style="cursor: pointer;" onclick="window.location.href='{{=URL('projects', 'view', args=[project.projects.id])}}'">
+                  <td><strong>{{=project.projects.project_number or '-'}}</strong></td>
+                  <td>{{=project.projects.name}}</td>
+                  <td>
+                    {{if project.project_statuses:}}
+                      {{status_id = project.projects.status_id}}
+                      {{status_color = status_colors.get(status_id, 'secondary') if status_colors else 'secondary'}}
+                      <span class="badge bg-{{=status_color}}">{{=project.project_statuses.name}}</span>
+                    {{else:}}
+                      <span class="badge bg-secondary">-</span>
+                    {{pass}}
+                  </td>
+                  <td>{{=f"{float(project.projects.budget or 0):,.2f}".replace(',', ' ')}} ₽</td>
+                  <td>{{=project.projects.start_date.strftime('%d.%m.%Y') if project.projects.start_date else '-'}}</td>
+                  <td>{{=project.projects.end_date.strftime('%d.%m.%Y') if project.projects.end_date else '-'}}</td>
+                  <td onclick="event.stopPropagation();">
+                    <a href="{{=URL('projects', 'view', args=[project.projects.id])}}" class="btn btn-sm btn-info">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                {{pass}}
+              </tbody>
+            </table>
+          </div>
+          {{else:}}
+          <p class="text-muted text-center">У клиента пока нет проектов</p>
+          {{pass}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Стили для кликабельных строк таблицы проектов */
+.table tbody tr[onclick] {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.table tbody tr[onclick]:hover {
+  background-color: #f8f9fa !important;
+}
+
+.table tbody tr[onclick] td:last-child {
+  cursor: default;
+}
+
+/* Sidebar стили */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -500px;
+  width: 500px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  transition: right 0.3s ease;
+  z-index: 1050;
+  overflow-y: auto;
+}
+
+.sidebar.open {
+  right: 0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1040;
+  display: none;
+}
+
+.sidebar-overlay.show {
+  display: block;
+}
+
+{{if show_project_panel:}}
+.sidebar-overlay {
+  display: block;
+}
+{{pass}}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.sidebar-body {
+  padding: 20px;
+}
+</style>
+
+<!-- Sidebar для добавления проекта -->
+<div class="sidebar-overlay" id="projectSidebarOverlay" onclick="closeProjectSidebar()"></div>
+<div class="sidebar {{='open' if show_project_panel else ''}}" id="projectSidebar">
+  <div class="sidebar-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="mb-0"><i class="bi bi-folder-plus"></i> Добавление проекта</h4>
+      <button type="button" class="btn btn-light btn-sm" onclick="closeProjectSidebar()">
+        <i class="bi bi-times"></i>
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-body">
+    {{=form_project.custom.begin}}
+    <input type="hidden" name="customer_id" value="{{=customer.id}}">
+    {{if form_project.errors:}}
+    <div class="alert alert-danger">
+      <strong>Ошибки:</strong>
+      <ul class="mb-0">
+        {{for field, error in form_project.errors.items():}}
+        <li>{{=field}}: {{=error}}</li>
+        {{pass}}
+      </ul>
+    </div>
+    {{pass}}
+    <div class="form-group">
+      <label for="projects_name">Название проекта <span class="text-danger">*</span></label>
+      {{=form_project.custom.widget.name}}
+    </div>
+    <div class="form-group">
+      <label for="projects_budget">Бюджет проекта</label>
+      {{=form_project.custom.widget.budget}}
+    </div>
+    <div class="form-group">
+      <label for="projects_start_date">Дата начала проекта</label>
+      {{=form_project.custom.widget.start_date}}
+    </div>
+    <div class="form-group">
+      <label for="projects_end_date">Дата окончания проекта</label>
+      {{=form_project.custom.widget.end_date}}
+    </div>
+    <div class="form-group">
+      <label for="projects_description">Описание проекта</label>
+      {{=form_project.custom.widget.description}}
+    </div>
+    <div class="form-group">
+      <label for="projects_notes">Примечания</label>
+      {{=form_project.custom.widget.notes}}
+    </div>
+    <div class="form-group">
+      <label for="projects_sla_hours">SLA - максимальное время в статусе (часы)</label>
+      {{=form_project.custom.widget.sla_hours}}
+    </div>
+    <div class="form-group">
+      {{=form_project.custom.submit}}
+      <button type="button" class="btn btn-secondary btn-block mt-2" onclick="closeProjectSidebar()">Отмена</button>
+    </div>
+    {{=form_project.custom.end}}
+  </div>
+</div>
+
+<script>
+function openProjectSidebar() {
+  document.getElementById('projectSidebar').classList.add('open');
+  document.getElementById('projectSidebarOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProjectSidebar() {
+  document.getElementById('projectSidebar').classList.remove('open');
+  document.getElementById('projectSidebarOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// Закрытие по ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeProjectSidebar();
+  }
+});
+</script>

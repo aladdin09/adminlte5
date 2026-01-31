@@ -19,10 +19,124 @@
     <!-- Speaking of Google, don't forget to set your site up:
          http://google.com/webmasters -->
     <meta name="google-site-verification" content="">
-    <!-- include stylesheets -->
+    <!-- Vuexy template styles (static/vuexy) -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500;1,600" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
-    <link rel="stylesheet" href="{{=URL('static','css/bootstrap.min.css')}}"/>
-    <link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap4.css')}}"/>
+    <!-- BEGIN: Vendor CSS -->
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/vendors/css/vendors.min.css')}}">
+    <!-- END: Vendor CSS -->
+    <!-- BEGIN: Theme CSS -->
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/bootstrap.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/bootstrap-extended.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/colors.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/components.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/themes/dark-layout.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/themes/bordered-layout.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/themes/semi-dark-layout.css')}}">
+    <!-- BEGIN: Page CSS (horizontal menu) -->
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/app-assets/css/core/menu/menu-types/horizontal-menu.css')}}">
+    <!-- END: Page CSS -->
+    <!-- BEGIN: Custom CSS (Vuexy) -->
+    <link rel="stylesheet" type="text/css" href="{{=URL('static','vuexy/assets/css/style.css')}}">
+    <!-- END: Custom CSS -->
+    <!-- Vuexy: палитра + доработки шапки и меню -->
+    <style>
+   
+    /* Шапка — Vuexy primary #7367f0, прижата к верху страницы */
+    .header-navbar { background-color: #7367f0 !important; box-shadow: 0 4px 24px 0 rgba(115, 103, 240, 0.25); margin: 0; margin-top: 20px !important; }
+    .header-navbar[data-nav="brand-center"],
+    nav[data-nav="brand-center"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0;
+        right: 0;
+        z-index: 1030;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    .header-navbar .navbar-header .brand-text,
+    .header-navbar .navbar-container .nav-link { color: rgba(255,255,255,.9) !important; }
+    .header-navbar .navbar-container .nav-link:hover,
+    .header-navbar .navbar-container .nav-link:focus { color: #fff !important; background: rgba(255,255,255,.1); border-radius: .25rem; }
+    .header-navbar .navbar-container .nav-link.active { background: rgba(255,255,255,.15); color: #fff !important; border-radius: .25rem; }
+    .header-navbar .navbar-container .dropdown-menu { border-radius: .25rem; }
+    .header-navbar .navbar-container .dropdown-user-link .user-name,
+    .header-navbar .navbar-container .dropdown-user-link .user-status,
+    .header-navbar .navbar-container .dropdown-user-link .avatar { color: rgba(255,255,255,.9) !important; }
+    .header-navbar .navbar-container .dropdown-user-link .avatar i { color: rgba(255,255,255,.9); }
+    .header-navbar .navbar-container .dropdown:hover .dropdown-menu,
+    .header-navbar .navbar-container .dropdown.show .dropdown-menu { display: block; }
+    /* Jumbotron — градиент Vuexy primary, ширина как у body (2rem по бокам) */
+    .page-header-mini .jumbotron-fluid {
+        background: linear-gradient(135deg, #7367f0 0%, #5e50ee 100%) !important;
+        color: #fff !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+    .page-header-mini .jumbotron-fluid .container {
+        max-width: none;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    /* Заголовок карточки по умолчанию — Vuexy primary */
+    .card .card-header:not([class*="bg-"]) {
+        background-color: #7367f0 !important;
+        border-color: #7367f0;
+        color: #fff !important;
+    }
+    /* navbar-container — шире (1rem по бокам), прижат к верху страницы */
+    .horizontal-menu .header-navbar .navbar-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: 0;
+        padding-bottom: 0.8rem;
+    }
+    .horizontal-menu .header-navbar .navbar-container.d-flex.content {
+        align-items: flex-start;
+    }
+    /* navbar-container d-flex content w-100 — закрепить у верха */
+    .header-navbar .navbar-container.d-flex.content.w-100 {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+    }
+    /* html .content.app-content — верх 20px везде */
+    html .content.app-content {
+        padding: 20px 2rem 0 2rem !important;
+    }
+    .horizontal-layout.navbar-floating .app-content {
+        padding: 20px 2rem 0 2rem;
+    }
+    .horizontal-layout .footer {
+        padding: 1rem 2rem;
+    }
+    /* data-menu="menu-wrapper" — опустить на 40px */
+    [data-menu="menu-wrapper"] {
+        margin-top: 40px;
+    }
+    /* Утилита: верхний отступ 40px */
+    .erp-margin-top-40 {
+        margin-top: 40px;
+    }
+    /* Утилита: верхний отступ 60px */
+    .erp-margin-top-60 {
+        margin-top: 60px;
+    }
+    /* Утилита: верхний отступ 120px */
+    .erp-margin-top-120 {
+        margin-top: 120px;
+    }
+    /* Утилита: верхний отступ 140px */
+    .erp-margin-top-140 {
+        margin-top: 140px;
+    }
+    /* Убрать верхний отступ при pace-done (Pace.js) */
+    body.pace-done,
+    html.pace-done body {
+        margin-top: 0 !important;
+        
+    }
+    </style>
     <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
     <link rel="apple-touch-icon" href="{{=URL('static','images/favicon.png')}}">
     <!-- All JavaScript at the bottom, except for Modernizr which enables
@@ -30,83 +144,28 @@
     <script src="{{=URL('static','js/modernizr-2.8.3.min.js')}}"></script>
     <!-- Favicons -->
     {{include 'web2py_ajax.html'}} <!-- this includes jquery.js, calendar.js/.css and web2py.js -->
-    {{block head}}{{end}}
-  </head>
-  <body>
-    <div class="w2p_flash alert alert-dismissable">{{=response.flash or ''}}</div>
-    <!-- Navbar ======================================= -->
-    <nav class="navbar navbar-light navbar-expand-md bg-faded bg-dark navbar-dark justify-content-center">
-       <a href="http://web2py.com" class="navbar-brand d-flex w-50 mr-auto">web2py</a>
-       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-         <span class="navbar-toggler-icon"></span>
-       </button>
-       <div class="navbar-collapse collapse w-100" id="navbarNavDropdown">
-         <ul class="navbar-nav w-100 justify-content-center">
-          {{for _item in response.menu or []:}}
-          {{if len(_item)<4 or not _item[3]:}}
-          <li class="nav-item {{if _item[1]:}}active{{pass}}">
-            <a class="nav-link" href="{{=_item[2]}}">{{=_item[0]}}</a>
-          </li>
-          {{else:}}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="{{=_item[2]}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{=_item[0]}}</a>
-            <div class="dropdown-menu">
-              {{for _subitem in _item[3]:}}
-              <a class="dropdown-item" href="{{=_subitem[2]}}">{{=_subitem[0]}}</a>
-              {{pass}}
-            </div>
-          </li>
-          {{pass}}
-          {{pass}}
-        </ul>
-         <form class="form-inline my-2 my-lg-0">
-             <input class="form-control mr-sm-2" type="text" placeholder="Search">
-         </form>
-        {{if 'auth' in globals():}}
-        <ul class="nav navbar-nav ml-auto w-100 justify-content-end">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              {{if auth.user:}}{{=auth.user.first_name}}{{else:}}LOGIN{{pass}}
-            </a>
-            <div class="dropdown-menu dropdown-menu-right">
-              {{if auth.user:}}
-              <a class="dropdown-item" href="{{=URL('default','user/profile')}}">{{=T('Profile')}}</a>
-              {{if 'change_password' not in auth.settings.actions_disabled:}}
-              <a class="dropdown-item" href="{{=URL('default','user/change_password')}}">{{=T('Change Password')}}</a>
-              {{pass}}
-              <a class="dropdown-item" href="{{=URL('default','user/logout')}}">{{=T('Logout')}}</a>
-              {{else:}}
-              <a class="dropdown-item" href="{{=URL('default','user/login')}}">{{=T('Login')}}</a>
-              {{if 'register' not in auth.settings.actions_disabled:}}
-              <a class="dropdown-item" href="{{=URL('default','user/register')}}">{{=T('Sign up')}}</a>
-              {{pass}}
-              {{if 'retrieve_password' not in auth.settings.actions_disabled:}}
-              <a class="dropdown-item" href="{{=URL('default','user/retrieve_password')}}">{{=T('Lost Password')}}</a>
-              {{pass}}
-              {{pass}}
-            </div>
-          </li>
-        </ul>
-        {{pass}}
-      </div>
-    </nav>
 
-    <!-- Masthead ===================================== -->
-    {{block header}}
+    {{block head}}
+    
+    
     {{end}}
-    <!-- Main ========================================= -->
-    <!-- Begin page content -->
-    <div class="container-fluid main-container">
+  
+  </head>
+  <body class="has-navigator">
+  {{include 'navigator.html'}}
+
+    <!-- Main content (Vuexy: app-content с отступами 2rem) -->
+    <div class="app-content ">
       {{include}}
       {{=response.toolbar() if response.show_toolbar else ''}}
     </div>
 
     {{block footer}} <!-- this is default footer -->
-    <footer class="footer container-fluid">
+    <footer class="footer">
       <div class="row">
-        <div class="col-md-12">
-          <div class="copyright pull-left">{{=T('Copyright')}} &#169; {{=request.now.year}}</div>
-          <div id="poweredBy" class="pull-right">
+        <div class="col-12">
+          <div class="copyright float-start">{{=T('Copyright')}} &#169; {{=request.now.year}}</div>
+          <div id="poweredBy" class="float-end">
             {{=T('Powered by')}}
             <a href="http://www.web2py.com/">web2py</a>
           </div>
@@ -114,8 +173,8 @@
       </div>
     </footer>
     {{end}}
-    <!-- The javascript =============================== -->
-    <script src="{{=URL('static','js/bootstrap.bundle.min.js')}}"></script>
+    <!-- Bootstrap 5 (Vuexy) -->
+    <script src="{{=URL('static','vuexy/app-assets/vendors/js/vendors.min.js')}}"></script>
     <script src="{{=URL('static','js/web2py-bootstrap4.js')}}"></script>
     {{block page_js}}{{end page_js}}
     {{if response.google_analytics_id:}}

@@ -1,0 +1,456 @@
+{{extend 'layout_gentelella_bs5.html'}}
+
+{{block header}}
+{{if breadcrumbs:}}
+<nav aria-label="breadcrumb" class="mb-2">
+  <ol class="breadcrumb mb-0">
+    {{for crumb in breadcrumbs:}}
+    {{if crumb['url']:}}
+    <li class="breadcrumb-item"><a href="{{=crumb['url']}}">{{=crumb['label']}}</a></li>
+    {{else:}}
+    <li class="breadcrumb-item active" aria-current="page">{{=crumb['label']}}</li>
+    {{pass}}
+    {{pass}}
+  </ol>
+</nav>
+{{pass}}
+{{end}}
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <!-- Информация о проекте и клиенте -->
+    <div class="col-md-4">
+      <!-- Информация о проекте -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-info-circle"></i> Информация о проекте</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless">
+            <tr>
+              <th width="40%">Номер проекта:</th>
+              <td><strong>{{=project.project_number or '-'}}</strong></td>
+            </tr>
+            <tr>
+              <th>Название:</th>
+              <td>{{=project.name}}</td>
+            </tr>
+            <tr>
+              <th>Статус:</th>
+              <td>
+                {{if status:}}
+                  {{status_color = status_colors.get(status.id, 'secondary') if status_colors else 'secondary'}}
+                  <span class="badge bg-{{=status_color}} badge-lg">{{=status.name}}</span>
+                {{else:}}
+                  <span class="badge bg-secondary">Неизвестно</span>
+                {{pass}}
+              </td>
+            </tr>
+            {{if project.budget:}}
+            <tr>
+              <th>Бюджет:</th>
+              <td><strong>{{=f"{float(project.budget or 0):,.2f}".replace(',', ' ')}} ₽</strong></td>
+            </tr>
+            {{pass}}
+            {{if project.start_date:}}
+            <tr>
+              <th>Дата начала:</th>
+              <td>{{=project.start_date.strftime('%d.%m.%Y')}}</td>
+            </tr>
+            {{pass}}
+            {{if project.end_date:}}
+            <tr>
+              <th>Дата окончания:</th>
+              <td>{{=project.end_date.strftime('%d.%m.%Y')}}</td>
+            </tr>
+            {{pass}}
+            {{if project.sla_hours:}}
+            <tr>
+              <th>SLA (часы):</th>
+              <td>{{=project.sla_hours}}</td>
+            </tr>
+            {{pass}}
+            {{if project.status_started_at:}}
+            <tr>
+              <th>Дата входа в статус:</th>
+              <td>{{=project.status_started_at.strftime('%d.%m.%Y %H:%M')}}</td>
+            </tr>
+            {{pass}}
+            {{if project.description:}}
+            <tr>
+              <th>Описание:</th>
+              <td>{{=project.description}}</td>
+            </tr>
+            {{pass}}
+            {{if project.notes:}}
+            <tr>
+              <th>Примечания:</th>
+              <td>{{=project.notes}}</td>
+            </tr>
+            {{pass}}
+            <tr>
+              <th>Дата создания:</th>
+              <td>{{=project.created_on.strftime('%d.%m.%Y %H:%M') if project.created_on else '-'}}</td>
+            </tr>
+            <tr>
+              <th>Дата изменения:</th>
+              <td>{{=project.modified_on.strftime('%d.%m.%Y %H:%M') if project.modified_on else '-'}}</td>
+            </tr>
+            {{if project.created_at:}}
+            <tr>
+              <th>Создан (UTC):</th>
+              <td>{{=project.created_at.strftime('%d.%m.%Y %H:%M')}}</td>
+            </tr>
+            {{pass}}
+            {{if project.updated_at:}}
+            <tr>
+              <th>Обновлен (UTC):</th>
+              <td>{{=project.updated_at.strftime('%d.%m.%Y %H:%M')}}</td>
+            </tr>
+            {{pass}}
+          </table>
+        </div>
+      </div>
+
+      <!-- Информация о клиенте -->
+      {{if customer:}}
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="bi bi-user"></i> Информация о клиенте</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless">
+            <tr>
+              <th width="40%">Имя:</th>
+              <td>
+                <a href="{{=URL('customers', 'customer', args=[customer.id])}}">
+                  <strong>{{=customer.name}}</strong>
+                </a>
+              </td>
+            </tr>
+            {{if customer.phone:}}
+            <tr>
+              <th>Телефон:</th>
+              <td><a href="tel:{{=customer.phone}}">{{=customer.phone}}</a></td>
+            </tr>
+            {{pass}}
+            {{if customer.email:}}
+            <tr>
+              <th>Email:</th>
+              <td><a href="mailto:{{=customer.email}}">{{=customer.email}}</a></td>
+            </tr>
+            {{pass}}
+            {{if customer.address:}}
+            <tr>
+              <th>Адрес:</th>
+              <td>{{=customer.address}}</td>
+            </tr>
+            {{pass}}
+            {{if customer.notes:}}
+            <tr>
+              <th>Примечания:</th>
+              <td>{{=customer.notes}}</td>
+            </tr>
+            {{pass}}
+          </table>
+        </div>
+      </div>
+      {{else:}}
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-warning text-white">
+          <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Клиент не указан</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Для этого проекта не указан клиент</p>
+        </div>
+      </div>
+      {{pass}}
+    </div>
+
+    <!-- Комплекты и заказы проекта -->
+    <div class="col-md-8">
+      <!-- Комплекты проекта -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-file-text"></i> Комплекты проекта</h5>
+          <div class="d-flex align-items-center">
+            <span class="badge bg-light badge-pill me-3" style="font-size: 1rem;">{{=len(complects)}}</span>
+            <button type="button" class="btn btn-light btn-sm" onclick="openComplectSidebar()">
+              <i class="bi bi-plus"></i> Добавить комплект
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          {{if complects:}}
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="thead-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Статус</th>
+                  <th>Дата изменения статуса</th>
+                  <th>Общая сумма</th>
+                  <th>Дата создания</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{for comp in complects:}}
+                <tr style="cursor: pointer;" onclick="window.location.href='{{=URL('complects', 'view_complect', args=[comp.complects.id])}}'">
+                  <td><strong>#{{=comp.complects.id}}</strong></td>
+                  <td>
+                    {{if comp.complect_statuses:}}
+                      {{status_id = comp.complects.status_id}}
+                      {{status_color = complect_status_colors.get(status_id, 'secondary') if complect_status_colors else 'secondary'}}
+                      <span class="badge bg-{{=status_color}}">{{=comp.complect_statuses.name}}</span>
+                    {{else:}}
+                      <span class="badge bg-secondary">-</span>
+                    {{pass}}
+                  </td>
+                  <td>{{=comp.complects.status_changed_on.strftime('%d.%m.%Y %H:%M') if comp.complects.status_changed_on else '-'}}</td>
+                  <td><strong>{{=f"{float(comp.complects.total_amount or 0):,.2f}".replace(',', ' ')}} ₽</strong></td>
+                  <td>{{=comp.complects.created_on.strftime('%d.%m.%Y %H:%M') if comp.complects.created_on else '-'}}</td>
+                  <td onclick="event.stopPropagation();">
+                    {{if comp.complects.status_id == complect_status_kp_soglasovano_id or comp.complects.status_id == complect_status_kp_otpravleno_id or (not has_non_chernovik and (not comp.complect_statuses or comp.complect_statuses.name != 'Черновик')):}}
+                    <a href="{{=URL('complects', 'commercial_proposal', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-warning ml-1" title="Коммерческое предложение (PDF)" target="_blank" rel="noopener noreferrer">
+                      <i class="bi bi-file-pdf-o"></i> КП
+                    </a>
+                    {{pass}}
+                    {{if comp.complect_statuses and comp.complect_statuses.name != 'Черновик' and comp.complects.status_id != complect_status_ispravlenie_id and comp.complects.status_id != complect_status_kp_soglasovano_id and comp.complects.status_id != complect_status_kp_otpravleno_id and comp.complects.status_id != complect_status_zakaz_id:}}
+                    <a href="{{=URL('complects', 'set_status_ispravlenie', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-info ml-1" title="Исправить">
+                      <i class="bi bi-pencil"></i> Исправить
+                    </a>
+                    {{pass}}
+                    {{if comp.complects.status_id == complect_status_ispravlenie_id or ((not has_non_chernovik) and comp.complects.status_id != complect_status_rop_id and comp.complects.status_id != complect_status_kp_soglasovano_id and comp.complects.status_id != complect_status_kp_otpravleno_id and comp.complects.status_id != complect_status_zakaz_id):}}
+                    <a href="{{=URL('complects', 'set_status_rop', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-info ml-1" title="На согласование РОПу">
+                      <i class="bi bi-send"></i> На согласование РОПу
+                    </a>
+                    {{pass}}
+                    {{if comp.complects.status_id == complect_status_rop_id:}}
+                    <a href="{{=URL('complects', 'set_status_kp_soglasovano', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-success ml-1" title="Согласовать КП">
+                      <i class="bi bi-check"></i> Согласовать КП
+                    </a>
+                    {{pass}}
+                    {{if comp.complects.status_id == complect_status_kp_soglasovano_id:}}
+                    <a href="{{=URL('complects', 'set_status_kp_otpravleno', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-success ml-1" title="КП отправлено">
+                      <i class="bi bi-send"></i> КП отправлено
+                    </a>
+                    {{pass}}
+                    {{if comp.complects.status_id == complect_status_kp_otpravleno_id:}}
+                    <a href="{{=URL('complects', 'set_status_chernovik', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-secondary ml-1" title="Изменить">
+                      <i class="bi bi-pencil-square-o"></i> Изменить
+                    </a>
+                    <a href="{{=URL('complects', 'set_status_zakaz', args=[comp.complects.id])}}" 
+                       class="btn btn-sm btn-success ml-1" title="Создать заказ">
+                      <i class="bi bi-cart"></i> Создать заказ
+                    </a>
+                    {{pass}}
+                  </td>
+                </tr>
+                {{pass}}
+              </tbody>
+            </table>
+          </div>
+          {{else:}}
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> У проекта пока нет комплектов
+          </div>
+          {{pass}}
+        </div>
+      </div>
+
+      <!-- Заказы проекта -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-cart"></i> Заказы проекта</h5>
+          <span class="badge bg-light badge-pill" style="font-size: 1rem;">{{=len(orders)}}</span>
+        </div>
+        <div class="card-body">
+          {{if orders:}}
+          <div class="table-responsive">
+            <table class="table table-striped table-hover" id="projectOrdersTable">
+              <thead class="thead-light">
+                <tr>
+                  <th>Номер заказа</th>
+                  <th>Дата заказа</th>
+                  <th>Общая сумма</th>
+                  <th>Дата создания</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{for order in orders:}}
+                <tr class="order-row" data-href="{{=URL('orders', 'view', args=[order.id])}}" style="cursor: pointer;" onclick="var u=this.getAttribute('data-href');if(u)location.href=u;">
+                  <td><strong>{{=order.order_number}}</strong></td>
+                  <td>{{=order.order_date.strftime('%d.%m.%Y') if order.order_date else '-'}}</td>
+                  <td><strong>{{=f"{float(order.total_amount or 0):,.2f}".replace(',', ' ')}} ₽</strong></td>
+                  <td>{{=order.created_on.strftime('%d.%m.%Y %H:%M') if order.created_on else '-'}}</td>
+                </tr>
+                {{pass}}
+              </tbody>
+            </table>
+          </div>
+          {{else:}}
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> У проекта пока нет заказов
+          </div>
+          {{pass}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+.badge-lg {
+  font-size: 0.9rem;
+  padding: 0.4em 0.6em;
+}
+.card {
+  border: none;
+}
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Стили для кликабельных строк таблицы комплектов */
+.table tbody tr[onclick] {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.table tbody tr[onclick]:hover {
+  background-color: #f8f9fa !important;
+}
+
+.table tbody tr[onclick] td:last-child {
+  cursor: default;
+}
+
+/* Sidebar стили */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -500px;
+  width: 500px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  transition: right 0.3s ease;
+  z-index: 1050;
+  overflow-y: auto;
+}
+
+.sidebar.open {
+  right: 0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1040;
+  display: none;
+}
+
+.sidebar-overlay.show {
+  display: block;
+}
+
+{{if show_complect_panel:}}
+.sidebar-overlay {
+  display: block;
+}
+{{pass}}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.sidebar-body {
+  padding: 20px;
+}
+</style>
+
+<!-- Sidebar для добавления комплекта -->
+<div class="sidebar-overlay" id="complectSidebarOverlay" onclick="closeComplectSidebar()"></div>
+<div class="sidebar {{='open' if show_complect_panel else ''}}" id="complectSidebar">
+  <div class="sidebar-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="mb-0"><i class="bi bi-file-plus"></i> Добавление комплекта</h4>
+      <button type="button" class="btn btn-light btn-sm" onclick="closeComplectSidebar()">
+        <i class="bi bi-times"></i>
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-body">
+    {{=form_complect.custom.begin}}
+    <input type="hidden" name="project_id" value="{{=project.id}}">
+    {{if form_complect.errors:}}
+    <div class="alert alert-danger">
+      <strong>Ошибки:</strong>
+      <ul class="mb-0">
+        {{for field, error in form_complect.errors.items():}}
+        <li>{{=field}}: {{=error}}</li>
+        {{pass}}
+      </ul>
+    </div>
+    {{pass}}
+    <div class="form-group">
+      <label for="complects_description">Описание комплекта</label>
+      {{=form_complect.custom.widget.description}}
+    </div>
+    <div class="form-group">
+      <label for="complects_execution_time">Время на выполнение (дни)</label>
+      {{=form_complect.custom.widget.execution_time}}
+    </div>
+    <div class="form-group">
+      <label for="complects_deadline">Дедлайн</label>
+      {{=form_complect.custom.widget.deadline}}
+    </div>
+    <div class="form-group">
+      <label for="complects_total_amount">Общая сумма</label>
+      {{=form_complect.custom.widget.total_amount}}
+    </div>
+    <div class="form-group">
+      {{=form_complect.custom.submit}}
+      <button type="button" class="btn btn-secondary btn-block mt-2" onclick="closeComplectSidebar()">Отмена</button>
+    </div>
+    {{=form_complect.custom.end}}
+  </div>
+</div>
+
+<script>
+function openComplectSidebar() {
+  document.getElementById('complectSidebar').classList.add('open');
+  document.getElementById('complectSidebarOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeComplectSidebar() {
+  document.getElementById('complectSidebar').classList.remove('open');
+  document.getElementById('complectSidebarOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeComplectSidebar();
+  }
+});
+</script>
