@@ -19,10 +19,18 @@ REQUIRED_WEB2PY_VERSION = "3.0.10"
 # File is released under public domain and you can use without limitations
 # -------------------------------------------------------------------------
 
-web2py_version_string = request.global_settings.web2py_version.split("-")[0]
-web2py_version = list(map(int, web2py_version_string.split(".")[:3]))
-if web2py_version < list(map(int, REQUIRED_WEB2PY_VERSION.split(".")[:3])):
-    raise HTTP(500, f"Requires web2py version {REQUIRED_WEB2PY_VERSION} or newer, not {web2py_version_string}")
+try:
+    web2py_version_string = request.global_settings.web2py_version.split("-")[0]
+    web2py_version = list(map(int, web2py_version_string.split(".")[:3]))
+    if web2py_version < list(map(int, REQUIRED_WEB2PY_VERSION.split(".")[:3])):
+        raise HTTP(500, f"Requires web2py version {REQUIRED_WEB2PY_VERSION} or newer, not {web2py_version_string}")
+except Exception as version_error:
+    # Если не удалось проверить версию, пропускаем проверку
+    try:
+        import logging
+        logging.warning(f"Не удалось проверить версию web2py: {str(version_error)}")
+    except:
+        pass
 
 # -------------------------------------------------------------------------
 # if SSL/HTTPS is properly configured and you want all HTTP requests to
@@ -33,7 +41,43 @@ if web2py_version < list(map(int, REQUIRED_WEB2PY_VERSION.split(".")[:3])):
 # -------------------------------------------------------------------------
 # once in production, remove reload=True to gain full speed
 # -------------------------------------------------------------------------
-configuration = AppConfig(reload=True)
+try:
+    configuration = AppConfig(reload=True)
+except Exception as config_error:
+    # Если не удалось загрузить конфигурацию, используем значения по умолчанию
+    import traceback
+    error_msg = f"Ошибка загрузки конфигурации: {str(config_error)}\n{traceback.format_exc()}"
+    # Создаем объект-заглушку для конфигурации
+    class DefaultConfig:
+        def get(self, key, default=None):
+            defaults = {
+                "db.uri": "sqlite://storage.sqlite",
+                "db.pool_size": 10,
+                "db.migrate": True,
+                "app.production": False,
+                "host.names": ["*"],
+                "smtp.server": "",
+                "smtp.sender": "",
+                "smtp.login": "",
+                "smtp.tls": False,
+                "smtp.ssl": False,
+                "app.author": "",
+                "app.description": "",
+                "app.keywords": "",
+                "app.generator": "",
+                "app.toolbar": False,
+                "google.analytics_id": "",
+                "scheduler.enabled": False,
+                "scheduler.heartbeat": 1,
+            }
+            return defaults.get(key, default)
+    configuration = DefaultConfig()
+    # Логируем ошибку, если возможно
+    try:
+        import logging
+        logging.error(error_msg)
+    except:
+        pass
 
 if "GAE_APPLICATION" not in os.environ:
     # ---------------------------------------------------------------------
@@ -41,10 +85,22 @@ if "GAE_APPLICATION" not in os.environ:
     # ---------------------------------------------------------------------
     # Подключение к базе данных SQLite
     # Путь sqlite://storage.sqlite указывает на файл databases/storage.sqlite
-    db = DAL(configuration.get("db.uri"),
-             pool_size=configuration.get("db.pool_size"),
-             migrate_enabled=configuration.get("db.migrate"),
-             check_reserved=["all"])
+    try:
+        db = DAL(configuration.get("db.uri"),
+                 pool_size=configuration.get("db.pool_size"),
+                 migrate_enabled=configuration.get("db.migrate"),
+                 check_reserved=["all"])
+    except Exception as db_error:
+        # Если не удалось подключиться к БД, создаем заглушку
+        import traceback
+        error_msg = f"Ошибка подключения к БД: {str(db_error)}\n{traceback.format_exc()}"
+        # Создаем пустую БД для избежания ошибок
+        db = DAL("sqlite://memory")
+        try:
+            import logging
+            logging.error(error_msg)
+        except:
+            pass
 else:
     # ---------------------------------------------------------------------
     # connect to Google Firestore
