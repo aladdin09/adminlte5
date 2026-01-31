@@ -10,18 +10,24 @@ import sys
 # Попытка импорта с обработкой ошибок
 try:
     from dashboard_data import get_dashboard_data, get_status_color
-except ImportError as e:
+except ImportError as import_err:
     # Если импорт не удался, попробуем альтернативные варианты
     try:
         import dashboard_data
         get_dashboard_data = dashboard_data.get_dashboard_data
         get_status_color = dashboard_data.get_status_color
-    except Exception as e2:
+    except Exception as import_err2:
         # Если и это не помогло, создадим заглушки
         def get_dashboard_data(db, request):
-            return {'error': f'Ошибка импорта dashboard_data: {str(e)}, {str(e2)}'}
+            return {'error': f'Ошибка импорта dashboard_data: {str(import_err)}, {str(import_err2)}'}
         def get_status_color(status_name):
             return 'secondary'
+except Exception:
+    # Полная заглушка на случай любой другой ошибки при импорте
+    def get_dashboard_data(db, request):
+        return {'error': 'Критическая ошибка импорта dashboard_data'}
+    def get_status_color(status_name):
+        return 'secondary'
 
 
 def index():
@@ -53,28 +59,23 @@ def index():
         return data
     except Exception as e:
         # Детальная информация об ошибке для диагностики
-        error_info = {
-            'error_type': type(e).__name__,
-            'error_message': str(e),
-            'traceback': traceback.format_exc(),
-            'sys_path': sys.path[:10],  # Первые 10 путей
-            'request_vars': dict(request.vars),
-            'request_args': request.args,
-        }
-        # Показываем детальную ошибку для диагностики
-        # На боевом сервере это поможет понять проблему
-        error_html = f"""
-        <html><body>
-        <h1>Ошибка в default/index</h1>
-        <h2>Тип ошибки: {error_info['error_type']}</h2>
-        <h3>Сообщение: {error_info['error_message']}</h3>
-        <h3>Traceback:</h3>
-        <pre>{error_info['traceback']}</pre>
-        <h3>Sys path (первые 10):</h3>
-        <pre>{error_info['sys_path']}</pre>
-        </body></html>
-        """
-        raise HTTP(500, error_html)
+        try:
+            error_type = type(e).__name__
+            error_message = str(e)
+            error_traceback = traceback.format_exc()
+            error_html = f"""
+            <html><body style="font-family: monospace; padding: 20px;">
+            <h1>Ошибка в default/index</h1>
+            <h2>Тип ошибки: {error_type}</h2>
+            <h3>Сообщение: {error_message}</h3>
+            <h3>Traceback:</h3>
+            <pre style="background: #f0f0f0; padding: 10px; overflow: auto;">{error_traceback}</pre>
+            </body></html>
+            """
+            raise HTTP(500, error_html)
+        except:
+            # Если даже вывод ошибки не работает, просто вернем текст
+            raise HTTP(500, f"Ошибка в default/index: {str(e)}")
 
 
 def get_status_color_by_id(status_id):
