@@ -69,26 +69,63 @@ def test_dashboard_data():
 def test_tables():
     """Проверка существования таблиц"""
     try:
+        # Откатываем любые незавершенные транзакции
+        try:
+            db.rollback()
+        except:
+            pass
+        
         tables = db.tables
         result = f"Таблицы в БД ({len(tables)}):\n\n"
         errors = []
+        success = []
+        
         for table in sorted(tables):
             try:
+                # Откатываем транзакцию перед каждым запросом, чтобы избежать проблем
+                try:
+                    db.rollback()
+                except:
+                    pass
+                
+                # Пробуем простой запрос
                 count = db(db[table].id > 0).count()
                 result += f"  ✓ {table}: {count} записей\n"
+                success.append(table)
             except Exception as e:
-                error_msg = f"  ✗ {table}: {str(e)}"
-                result += error_msg + "\n"
-                errors.append(f"{table}: {str(e)}")
+                error_str = str(e)
+                # Откатываем транзакцию после ошибки
+                try:
+                    db.rollback()
+                except:
+                    pass
+                
+                # Проверяем, существует ли таблица
+                if "does not exist" in error_str or "relation" in error_str.lower():
+                    result += f"  ✗ {table}: таблица не существует\n"
+                else:
+                    result += f"  ✗ {table}: {error_str[:100]}\n"
+                errors.append(f"{table}: {error_str[:200]}")
+        
+        result += f"\n\nИтого: ✓ работает {len(success)}, ✗ ошибок {len(errors)}"
+        
         if errors:
-            result += f"\n\nОшибки ({len(errors)}):\n"
-            for err in errors[:5]:  # Показываем первые 5 ошибок
+            result += f"\n\nОшибки (первые 10):\n"
+            for err in errors[:10]:
                 result += f"  - {err}\n"
-            if len(errors) > 5:
-                result += f"  ... и еще {len(errors) - 5} ошибок\n"
+            if len(errors) > 10:
+                result += f"  ... и еще {len(errors) - 10} ошибок\n"
+            
+            result += f"\n\n💡 Решение: Откройте https://eleotapp.ru/adminlte5/test/create_tables для создания таблиц"
+        
         return result
     except Exception as e:
         import traceback
+        # Откатываем транзакцию при критической ошибке
+        try:
+            db.rollback()
+        except:
+            pass
         return f"Ошибка проверки таблиц: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
 def test_table_structure():
@@ -130,9 +167,90 @@ def test_table_structure():
         import traceback
         return f"Ошибка проверки структуры таблицы: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
+def create_tables_simple():
+    """Простое создание таблиц - вызывает _create_table для каждой"""
+    try:
+        result = "Простое создание таблиц:\n\n"
+        
+        # Откатываем любые незавершенные транзакции
+        try:
+            db.rollback()
+        except:
+            pass
+        
+        # Проверяем миграцию
+        try:
+            migrate_enabled = db._adapter.migrate_enabled
+            if not migrate_enabled:
+                return "❌ Миграция отключена! Включите migrate=true в appconfig.ini"
+        except:
+            pass
+        
+        all_tables = sorted(db.tables)
+        result += f"Таблиц для создания: {len(all_tables)}\n\n"
+        
+        created = []
+        errors = []
+        
+        for table_name in all_tables:
+            try:
+                # Откатываем перед каждой таблицей
+                db.rollback()
+                
+                # Пробуем создать таблицу
+                table = db[table_name]
+                table._create_table()
+                
+                # Коммитим создание
+                db.commit()
+                
+                created.append(table_name)
+                result += f"✓ {table_name}: создана\n"
+            except Exception as e:
+                error_str = str(e)
+                # Откатываем после ошибки
+                try:
+                    db.rollback()
+                except:
+                    pass
+                
+                # Проверяем, может таблица уже существует
+                if "already exists" in error_str.lower() or "duplicate" in error_str.lower():
+                    created.append(table_name)
+                    result += f"✓ {table_name}: уже существует\n"
+                else:
+                    result += f"✗ {table_name}: {error_str[:150]}\n"
+                    errors.append(f"{table_name}: {error_str[:200]}")
+        
+        result += f"\n\nИтого: создано/существует {len(created)}, ошибок {len(errors)}"
+        
+        if errors:
+            result += f"\n\nОшибки:\n"
+            for err in errors[:10]:
+                result += f"  - {err}\n"
+        
+        if created:
+            result += f"\n\n✅ Обработано {len(created)} таблиц!"
+            result += f"\nПроверьте: https://eleotapp.ru/adminlte5/test/test_tables"
+        
+        return result
+    except Exception as e:
+        import traceback
+        try:
+            db.rollback()
+        except:
+            pass
+        return f"Ошибка: {str(e)}\n\n{traceback.format_exc()}"
+
 def create_tables():
     """Принудительное создание таблиц через обращение к ним"""
     try:
+        # Откатываем любые незавершенные транзакции перед началом
+        try:
+            db.rollback()
+        except:
+            pass
+        
         result = "Создание таблиц в базе данных:\n\n"
         
         # Проверяем настройки миграции
@@ -159,6 +277,12 @@ def create_tables():
         # Web2py создаст таблицу автоматически при первом обращении, если migrate=True
         for table_name in sorted(all_tables):
             try:
+                # Откатываем транзакцию перед каждой таблицей
+                try:
+                    db.rollback()
+                except:
+                    pass
+                
                 # Пробуем выполнить простой запрос - это заставит web2py создать таблицу
                 # если она не существует
                 try:
@@ -166,33 +290,69 @@ def create_tables():
                     db(db[table_name].id > 0).select(limitby=(0, 1))
                     exists.append(table_name)
                     result += f"✓ {table_name}: существует\n"
+                    # Коммитим успешную проверку
+                    try:
+                        db.commit()
+                    except:
+                        pass
                 except Exception as query_err:
                     error_str = str(query_err)
+                    # Откатываем транзакцию после ошибки
+                    try:
+                        db.rollback()
+                    except:
+                        pass
+                    
                     if "does not exist" in error_str or "relation" in error_str.lower():
                         # Таблица не существует, пытаемся создать через _create_table
                         try:
                             db[table_name]._create_table()
+                            # Коммитим создание таблицы
+                            try:
+                                db.commit()
+                            except Exception as commit_err:
+                                result += f"  ⚠ Ошибка коммита: {str(commit_err)}\n"
+                                try:
+                                    db.rollback()
+                                except:
+                                    pass
+                            
                             created.append(table_name)
                             result += f"✓ {table_name}: создана\n"
                         except Exception as create_err:
-                            result += f"✗ {table_name}: ошибка создания - {str(create_err)}\n"
-                            errors.append(f"{table_name}: {str(create_err)}")
+                            result += f"✗ {table_name}: ошибка создания - {str(create_err)[:200]}\n"
+                            errors.append(f"{table_name}: {str(create_err)[:200]}")
+                            # Откатываем после ошибки создания
+                            try:
+                                db.rollback()
+                            except:
+                                pass
                     else:
                         # Другая ошибка
-                        result += f"✗ {table_name}: ошибка запроса - {error_str}\n"
-                        errors.append(f"{table_name}: {error_str}")
+                        result += f"✗ {table_name}: ошибка запроса - {error_str[:200]}\n"
+                        errors.append(f"{table_name}: {error_str[:200]}")
+                        # Откатываем после ошибки
+                        try:
+                            db.rollback()
+                        except:
+                            pass
                         
             except Exception as e:
                 error_msg = str(e)
-                result += f"✗ {table_name}: ошибка - {error_msg}\n"
-                errors.append(f"{table_name}: {error_msg}")
+                result += f"✗ {table_name}: ошибка - {error_msg[:200]}\n"
+                errors.append(f"{table_name}: {error_msg[:200]}")
+                # Откатываем после ошибки
+                try:
+                    db.rollback()
+                except:
+                    pass
         
-        # Коммитим транзакцию
+        # Финальный коммит
         try:
             db.commit()
-            result += "\n✓ Транзакция закоммичена"
+            result += "\n✓ Финальная транзакция закоммичена"
         except Exception as commit_err:
-            result += f"\n⚠ Ошибка коммита: {str(commit_err)}"
+            result += f"\n⚠ Ошибка финального коммита: {str(commit_err)}"
             try:
                 db.rollback()
                 result += " (откат выполнен)"
@@ -201,17 +361,27 @@ def create_tables():
         
         result += f"\n\nИтого: создано {len(created)}, существует {len(exists)}, ошибок {len(errors)}"
         if errors:
-            result += f"\n\nОшибки:\n"
+            result += f"\n\nОшибки (первые 10):\n"
             for err in errors[:10]:
                 result += f"  - {err}\n"
+            if len(errors) > 10:
+                result += f"  ... и еще {len(errors) - 10} ошибок\n"
         
         if created:
-            result += f"\n\n✓ Успешно создано {len(created)} таблиц! Попробуйте открыть:\n"
-            result += "https://eleotapp.ru/adminlte5/default/index"
+            result += f"\n\n✅ Успешно создано {len(created)} таблиц!\n"
+            result += "Попробуйте открыть: https://eleotapp.ru/adminlte5/default/index"
+        elif not errors and exists:
+            result += f"\n\n✅ Все таблицы уже существуют!\n"
+            result += "Попробуйте открыть: https://eleotapp.ru/adminlte5/default/index"
         
         return result
     except Exception as e:
         import traceback
+        # Откатываем при критической ошибке
+        try:
+            db.rollback()
+        except:
+            pass
         return f"Ошибка создания таблиц: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
 def test_simple_query():
