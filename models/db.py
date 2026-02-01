@@ -5,7 +5,6 @@
 # Auth is for authenticaiton and access control
 # -------------------------------------------------------------------------
 from gluon import DAL
-from gluon.contrib.appconfig import AppConfig
 from gluon.tools import Auth
 from gluon.validators import IS_IN_DB, IS_EMPTY_OR, IS_EMAIL, IS_MATCH, IS_INT_IN_RANGE, IS_FLOAT_IN_RANGE
 import os
@@ -39,9 +38,33 @@ except Exception as version_error:
 # request.requires_https()
 
 # -------------------------------------------------------------------------
-# once in production, remove reload=True to gain full speed
+# Configuration class
 # -------------------------------------------------------------------------
-configuration = AppConfig(reload=True)
+class DefaultConfig:
+    def get(self, key, default=None):
+        defaults = {
+            "db.uri": "postgres://smetadoma02:Lenina21@localhost:5432/smetadoma02_db?set search_path=public",
+            "db.pool_size": 10,
+            "db.migrate": True,
+            "app.production": False,
+            "host.names": ["*"],
+            "smtp.server": "",
+            "smtp.sender": "",
+            "smtp.login": "",
+            "smtp.tls": False,
+            "smtp.ssl": False,
+            "app.author": "",
+            "app.description": "",
+            "app.keywords": "",
+            "app.generator": "",
+            "app.toolbar": False,
+            "google.analytics_id": "",
+            "scheduler.enabled": False,
+            "scheduler.heartbeat": 1,
+        }
+        return defaults.get(key, default)
+
+configuration = DefaultConfig()
 
 if "GAE_APPLICATION" not in os.environ:
     # ---------------------------------------------------------------------
