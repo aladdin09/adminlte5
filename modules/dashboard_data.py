@@ -109,12 +109,16 @@ def get_dashboard_data(db, request):
             filter_project_number=request.vars.get('filter_project_number', ''),
         )
     except Exception as e:
-        import project_statuses_service
+        import traceback
+        error_traceback = traceback.format_exc()
+        # Пытаемся получить хотя бы базовые данные
         try:
+            import project_statuses_service
             all_statuses = project_statuses_service.get_all_statuses(db, is_active=True, order_by='sort_order')
             dashboard_stats = [{'name': s.name, 'id': s.id, 'count': 0, 'color': get_status_color(s.name), 'sum': 0} for s in all_statuses]
-        except:
+        except Exception as e2:
             dashboard_stats = []
+            all_statuses = []
         return dict(
             dashboard_stats=dashboard_stats,
             total_projects=0,
@@ -122,7 +126,7 @@ def get_dashboard_data(db, request):
             total_orders=0,
             projects=[],
             all_customers=[],
-            all_statuses=[],
+            all_statuses=all_statuses if 'all_statuses' in locals() else [],
             status_colors={},
             project_complect_sums={},
             dashboard_complect_total=0,
@@ -130,5 +134,7 @@ def get_dashboard_data(db, request):
             filter_status='',
             filter_name='',
             filter_project_number='',
-            error=str(e)
+            error=str(e),
+            error_traceback=error_traceback,
+            error_type=type(e).__name__
         )

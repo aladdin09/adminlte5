@@ -55,6 +55,13 @@ def index():
         data['show_customer_panel'] = show_customer_panel
         if 'error' not in data:
             data.setdefault('error', None)
+        # Если есть ошибка в данных, логируем её
+        if data.get('error'):
+            import logging
+            try:
+                logging.error(f"Ошибка в get_dashboard_data: {data.get('error')}\nTraceback: {data.get('error_traceback', 'N/A')}")
+            except:
+                pass
         response.view = 'default/index.html'
         return data
     except Exception as e:
