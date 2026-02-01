@@ -263,6 +263,86 @@ def test_table_structure():
         import traceback
         return f"Ошибка проверки структуры таблицы: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
+def create_tables_direct():
+    """Прямое создание таблиц через обращение к ним (web2py создаст автоматически)"""
+    try:
+        result = "Прямое создание таблиц (web2py автоматически):\n\n"
+        
+        db.rollback()
+        
+        # Проверяем миграцию
+        try:
+            migrate = getattr(db._adapter, 'migrate_enabled', True)
+            result += f"Миграция: {migrate}\n\n"
+        except:
+            result += "Миграция: не удалось проверить (предполагаем True)\n\n"
+        
+        all_tables = sorted(db.tables)
+        result += f"Таблиц для создания: {len(all_tables)}\n\n"
+        
+        created = []
+        exists = []
+        errors = []
+        
+        for table_name in all_tables:
+            try:
+                db.rollback()
+                
+                # Просто обращаемся к таблице - web2py должен создать её автоматически
+                # Пробуем выполнить простой SELECT - это заставит создать таблицу
+                try:
+                    # Пробуем count - это должно создать таблицу если migrate=True
+                    count = db(db[table_name].id > 0).count()
+                    exists.append(table_name)
+                    result += f"✓ {table_name}: существует ({count} записей)\n"
+                    db.commit()
+                except Exception as count_err:
+                    error_str = str(count_err)
+                    if "does not exist" in error_str or "relation" in error_str.lower():
+                        # Таблица не существует, пробуем создать через insert (пустой)
+                        # Это заставит web2py создать таблицу
+                        try:
+                            # Пробуем вставить пустую запись и сразу удалить
+                            # Но лучше просто вызвать _create_table явно
+                            db[table_name]._create_table()
+                            db.commit()
+                            created.append(table_name)
+                            result += f"✓ {table_name}: создана\n"
+                        except Exception as create_err:
+                            # Если _create_table не работает, пробуем через определение заново
+                            result += f"✗ {table_name}: ошибка создания - {str(create_err)[:150]}\n"
+                            errors.append(f"{table_name}: {str(create_err)[:200]}")
+                            db.rollback()
+                    else:
+                        result += f"✗ {table_name}: ошибка - {error_str[:150]}\n"
+                        errors.append(f"{table_name}: {error_str[:200]}")
+                        db.rollback()
+                        
+            except Exception as e:
+                db.rollback()
+                result += f"✗ {table_name}: критическая ошибка - {str(e)[:150]}\n"
+                errors.append(f"{table_name}: {str(e)[:200]}")
+        
+        result += f"\n\nИтого: создано {len(created)}, существует {len(exists)}, ошибок {len(errors)}"
+        
+        if errors:
+            result += f"\n\nОшибки:\n"
+            for err in errors[:15]:
+                result += f"  - {err}\n"
+        
+        if created or exists:
+            result += f"\n\n✅ Обработано {len(created) + len(exists)} таблиц!"
+            result += f"\nПроверьте: https://eleotapp.ru/adminlte5/test/test_tables"
+        
+        return result
+    except Exception as e:
+        import traceback
+        try:
+            db.rollback()
+        except:
+            pass
+        return f"Ошибка: {str(e)}\n\n{traceback.format_exc()}"
+
 def create_tables_force():
     """Принудительное создание таблиц через прямое выполнение SQL"""
     try:
