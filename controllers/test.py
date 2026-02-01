@@ -6,6 +6,102 @@
 def index():
     return "Тестовый контроллер работает!"
 
+def test_connection():
+    """Детальная диагностика подключения к БД"""
+    try:
+        result = "Диагностика подключения к БД:\n\n"
+        
+        # 1. Проверка настроек
+        try:
+            uri = db._uri
+            result += f"URI подключения: {uri.split('@')[0]}@***\n"
+        except:
+            result += "⚠ Не удалось получить URI\n"
+        
+        # 2. Проверка драйвера
+        try:
+            driver = db._adapter.driver
+            result += f"Драйвер: {driver}\n"
+        except:
+            result += "⚠ Не удалось определить драйвер\n"
+        
+        # 3. Проверка миграции
+        try:
+            migrate = db._adapter.migrate_enabled
+            result += f"Миграция включена: {migrate}\n"
+        except:
+            result += "⚠ Не удалось проверить миграцию\n"
+        
+        # 4. Тест подключения
+        result += "\nТест подключения:\n"
+        try:
+            version = db.executesql("SELECT version();")
+            result += f"✓ Подключение работает\n"
+            result += f"PostgreSQL: {version[0][0][:80]}...\n"
+        except Exception as e:
+            result += f"✗ Ошибка подключения: {str(e)}\n"
+            return result
+        
+        # 5. Проверка текущего пользователя
+        result += "\nТекущий пользователь:\n"
+        try:
+            user_info = db.executesql("SELECT current_user, current_database();")
+            result += f"✓ Пользователь: {user_info[0][0]}\n"
+            result += f"✓ База данных: {user_info[0][1]}\n"
+        except Exception as e:
+            result += f"✗ Ошибка: {str(e)}\n"
+        
+        # 6. Проверка прав на создание таблиц
+        result += "\nПроверка прав:\n"
+        try:
+            # Пробуем создать тестовую таблицу
+            db.executesql("CREATE TABLE IF NOT EXISTS _web2py_test_table (id SERIAL PRIMARY KEY);")
+            db.executesql("DROP TABLE IF EXISTS _web2py_test_table;")
+            db.commit()
+            result += "✓ Права на создание таблиц: есть\n"
+        except Exception as e:
+            result += f"✗ Права на создание таблиц: {str(e)}\n"
+            try:
+                db.rollback()
+            except:
+                pass
+        
+        # 7. Проверка схемы
+        result += "\nПроверка схемы:\n"
+        try:
+            schemas = db.executesql("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public';")
+            if schemas:
+                result += "✓ Схема public существует\n"
+            else:
+                result += "⚠ Схема public не найдена\n"
+        except Exception as e:
+            result += f"✗ Ошибка проверки схемы: {str(e)}\n"
+        
+        # 8. Список существующих таблиц
+        result += "\nСуществующие таблицы в БД:\n"
+        try:
+            tables = db.executesql("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                ORDER BY table_name;
+            """)
+            if tables:
+                result += f"Найдено таблиц: {len(tables)}\n"
+                for table in tables[:10]:
+                    result += f"  - {table[0]}\n"
+                if len(tables) > 10:
+                    result += f"  ... и еще {len(tables) - 10} таблиц\n"
+            else:
+                result += "⚠ Таблиц не найдено\n"
+        except Exception as e:
+            result += f"✗ Ошибка: {str(e)}\n"
+        
+        return result
+    except Exception as e:
+        import traceback
+        return f"Ошибка диагностики: {str(e)}\n\n{traceback.format_exc()}"
+
 def test_db():
     try:
         # Пробуем разные варианты запросов
@@ -167,6 +263,86 @@ def test_table_structure():
         import traceback
         return f"Ошибка проверки структуры таблицы: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
+def create_tables_force():
+    """Принудительное создание таблиц через прямое выполнение SQL"""
+    try:
+        result = "Принудительное создание таблиц:\n\n"
+        
+        # Откатываем транзакции
+        try:
+            db.rollback()
+        except:
+            pass
+        
+        # Проверяем подключение
+        try:
+            test_query = db.executesql("SELECT version();")
+            result += f"✓ Подключение к БД работает\n"
+            result += f"PostgreSQL версия: {test_query[0][0][:50]}...\n\n"
+        except Exception as e:
+            result += f"✗ Ошибка подключения: {str(e)}\n\n"
+            return result
+        
+        all_tables = sorted(db.tables)
+        result += f"Таблиц для создания: {len(all_tables)}\n\n"
+        
+        created = []
+        errors = []
+        
+        for table_name in all_tables:
+            try:
+                db.rollback()
+                
+                table = db[table_name]
+                
+                # Получаем SQL для создания таблицы
+                try:
+                    # Пробуем получить SQL через адаптер
+                    sql = table._create_sql()
+                    if sql:
+                        # Выполняем SQL напрямую
+                        db.executesql(sql)
+                        db.commit()
+                        created.append(table_name)
+                        result += f"✓ {table_name}: создана через SQL\n"
+                    else:
+                        # Если SQL не получен, пробуем обычный способ
+                        table._create_table()
+                        db.commit()
+                        created.append(table_name)
+                        result += f"✓ {table_name}: создана\n"
+                except Exception as sql_err:
+                    error_str = str(sql_err)
+                    db.rollback()
+                    
+                    if "already exists" in error_str.lower():
+                        created.append(table_name)
+                        result += f"✓ {table_name}: уже существует\n"
+                    else:
+                        result += f"✗ {table_name}: {error_str[:200]}\n"
+                        errors.append(f"{table_name}: {error_str[:200]}")
+                        
+            except Exception as e:
+                db.rollback()
+                result += f"✗ {table_name}: {str(e)[:200]}\n"
+                errors.append(f"{table_name}: {str(e)[:200]}")
+        
+        result += f"\n\nИтого: создано {len(created)}, ошибок {len(errors)}"
+        
+        if errors:
+            result += f"\n\nОшибки:\n"
+            for err in errors[:10]:
+                result += f"  - {err}\n"
+        
+        return result
+    except Exception as e:
+        import traceback
+        try:
+            db.rollback()
+        except:
+            pass
+        return f"Ошибка: {str(e)}\n\n{traceback.format_exc()}"
+
 def create_tables_simple():
     """Простое создание таблиц - вызывает _create_table для каждой"""
     try:
@@ -181,56 +357,97 @@ def create_tables_simple():
         # Проверяем миграцию
         try:
             migrate_enabled = db._adapter.migrate_enabled
+            result += f"Миграция включена: {migrate_enabled}\n"
             if not migrate_enabled:
                 return "❌ Миграция отключена! Включите migrate=true в appconfig.ini"
+        except Exception as e:
+            result += f"⚠ Не удалось проверить миграцию: {str(e)}\n"
+        
+        # Проверяем подключение к БД
+        try:
+            db_version = db._adapter.driver
+            result += f"Драйвер БД: {db_version}\n"
         except:
             pass
         
         all_tables = sorted(db.tables)
-        result += f"Таблиц для создания: {len(all_tables)}\n\n"
+        result += f"\nТаблиц для создания: {len(all_tables)}\n\n"
         
         created = []
+        exists = []
         errors = []
         
         for table_name in all_tables:
             try:
                 # Откатываем перед каждой таблицей
-                db.rollback()
-                
-                # Пробуем создать таблицу
-                table = db[table_name]
-                table._create_table()
-                
-                # Коммитим создание
-                db.commit()
-                
-                created.append(table_name)
-                result += f"✓ {table_name}: создана\n"
-            except Exception as e:
-                error_str = str(e)
-                # Откатываем после ошибки
                 try:
                     db.rollback()
                 except:
                     pass
                 
-                # Проверяем, может таблица уже существует
-                if "already exists" in error_str.lower() or "duplicate" in error_str.lower():
-                    created.append(table_name)
-                    result += f"✓ {table_name}: уже существует\n"
-                else:
-                    result += f"✗ {table_name}: {error_str[:150]}\n"
-                    errors.append(f"{table_name}: {error_str[:200]}")
+                # Пробуем создать таблицу
+                table = db[table_name]
+                
+                # Пробуем _create_table
+                try:
+                    table._create_table()
+                    # Коммитим создание
+                    try:
+                        db.commit()
+                        created.append(table_name)
+                        result += f"✓ {table_name}: создана\n"
+                    except Exception as commit_err:
+                        result += f"⚠ {table_name}: создана, но ошибка коммита - {str(commit_err)}\n"
+                        try:
+                            db.rollback()
+                        except:
+                            pass
+                        # Пробуем еще раз закоммитить
+                        try:
+                            db.commit()
+                            created.append(table_name)
+                            result += f"  ✓ Коммит успешен при повторной попытке\n"
+                        except:
+                            errors.append(f"{table_name}: ошибка коммита - {str(commit_err)}")
+                            
+                except Exception as create_err:
+                    error_str = str(create_err)
+                    # Откатываем после ошибки
+                    try:
+                        db.rollback()
+                    except:
+                        pass
+                    
+                    # Проверяем, может таблица уже существует
+                    if "already exists" in error_str.lower() or "duplicate" in error_str.lower() or "уже существует" in error_str.lower():
+                        exists.append(table_name)
+                        result += f"✓ {table_name}: уже существует\n"
+                    else:
+                        # Показываем детальную ошибку
+                        result += f"✗ {table_name}: {error_str}\n"
+                        errors.append(f"{table_name}: {error_str}")
+                        
+            except Exception as e:
+                error_msg = str(e)
+                result += f"✗ {table_name}: критическая ошибка - {error_msg}\n"
+                errors.append(f"{table_name}: {error_msg}")
+                # Откатываем после ошибки
+                try:
+                    db.rollback()
+                except:
+                    pass
         
-        result += f"\n\nИтого: создано/существует {len(created)}, ошибок {len(errors)}"
+        result += f"\n\nИтого: создано {len(created)}, существует {len(exists)}, ошибок {len(errors)}"
         
         if errors:
-            result += f"\n\nОшибки:\n"
-            for err in errors[:10]:
+            result += f"\n\n❌ Ошибки ({len(errors)}):\n"
+            for err in errors[:15]:
                 result += f"  - {err}\n"
+            if len(errors) > 15:
+                result += f"  ... и еще {len(errors) - 15} ошибок\n"
         
-        if created:
-            result += f"\n\n✅ Обработано {len(created)} таблиц!"
+        if created or exists:
+            result += f"\n\n✅ Обработано {len(created) + len(exists)} таблиц!"
             result += f"\nПроверьте: https://eleotapp.ru/adminlte5/test/test_tables"
         
         return result
@@ -240,7 +457,7 @@ def create_tables_simple():
             db.rollback()
         except:
             pass
-        return f"Ошибка: {str(e)}\n\n{traceback.format_exc()}"
+        return f"Критическая ошибка: {str(e)}\n\n{traceback.format_exc()}"
 
 def create_tables():
     """Принудительное создание таблиц через обращение к ним"""
