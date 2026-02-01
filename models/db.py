@@ -51,7 +51,7 @@ except Exception as config_error:
     class DefaultConfig:
         def get(self, key, default=None):
             defaults = {
-                "db.uri": "postgres://smetadoma01:eY^x7ZQJ1OkQf8Y3g^Z2WvUMv1@localhost:5432/smetadoma01_db",
+                "db.uri": "postgres://smetadoma02:Lenina21@localhost:5432/smetadoma02_db",
                 "db.pool_size": 10,
                 "db.migrate": True,
                 "app.production": False,
