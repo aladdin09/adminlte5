@@ -41,43 +41,7 @@ except Exception as version_error:
 # -------------------------------------------------------------------------
 # once in production, remove reload=True to gain full speed
 # -------------------------------------------------------------------------
-try:
-    configuration = AppConfig(reload=True)
-except Exception as config_error:
-    # Если не удалось загрузить конфигурацию, используем значения по умолчанию
-    import traceback
-    error_msg = f"Ошибка загрузки конфигурации: {str(config_error)}\n{traceback.format_exc()}"
-    # Создаем объект-заглушку для конфигурации
-    class DefaultConfig:
-        def get(self, key, default=None):
-            defaults = {
-                "db.uri": "postgres://smetadoma02:Lenina21@localhost:5432/smetadoma02_db",
-                "db.pool_size": 10,
-                "db.migrate": True,
-                "app.production": False,
-                "host.names": ["*"],
-                "smtp.server": "",
-                "smtp.sender": "",
-                "smtp.login": "",
-                "smtp.tls": False,
-                "smtp.ssl": False,
-                "app.author": "",
-                "app.description": "",
-                "app.keywords": "",
-                "app.generator": "",
-                "app.toolbar": False,
-                "google.analytics_id": "",
-                "scheduler.enabled": False,
-                "scheduler.heartbeat": 1,
-            }
-            return defaults.get(key, default)
-    configuration = DefaultConfig()
-    # Логируем ошибку, если возможно
-    try:
-        import logging
-        logging.error(error_msg)
-    except:
-        pass
+configuration = AppConfig(reload=True)
 
 if "GAE_APPLICATION" not in os.environ:
     # ---------------------------------------------------------------------
@@ -85,22 +49,13 @@ if "GAE_APPLICATION" not in os.environ:
     # ---------------------------------------------------------------------
     # Подключение к базе данных PostgreSQL
     # Формат: postgres://username:password@host:port/database
-    try:
-        db = DAL(configuration.get("db.uri"),
-                 pool_size=configuration.get("db.pool_size"),
-                 migrate_enabled=configuration.get("db.migrate"),
-                 check_reserved=["all"])
-    except Exception as db_error:
-        # Если не удалось подключиться к БД, создаем заглушку
-        import traceback
-        error_msg = f"Ошибка подключения к БД: {str(db_error)}\n{traceback.format_exc()}"
-        # Создаем пустую БД для избежания ошибок
-        db = DAL("sqlite://memory")
-        try:
-            import logging
-            logging.error(error_msg)
-        except:
-            pass
+    db = DAL(
+        configuration.get("db.uri"),
+        pool_size=configuration.get("db.pool_size"),
+        migrate=configuration.get("db.migrate"),
+        fake_migrate=False,
+        check_reserved=["all"]
+    )
 else:
     # ---------------------------------------------------------------------
     # connect to Google Firestore
