@@ -235,9 +235,9 @@ def test_table_structure():
         return f"Ошибка проверки структуры таблицы: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
 def create_tables_simple():
-    """Простое создание таблиц - вызывает _create_table для каждой"""
+    """Создание таблиц - принудительно заставляет web2py создать таблицы"""
     try:
-        result = "Простое создание таблиц:\n\n"
+        result = "Создание таблиц через web2py:\n\n"
         
         # Откатываем любые незавершенные транзакции
         try:
@@ -247,15 +247,22 @@ def create_tables_simple():
         
         # Проверяем миграцию
         try:
-            # В новой версии используется migrate вместо migrate_enabled
-            migrate_value = getattr(db._adapter, 'migrate', True)
-            if hasattr(db._adapter, 'migrate_enabled'):
-                migrate_value = db._adapter.migrate_enabled
+            migrate_value = getattr(db._adapter, 'migrate', None)
+            if migrate_value is None:
+                migrate_value = getattr(db._adapter, 'migrate_enabled', True)
             result += f"Миграция: {migrate_value}\n\n"
             if migrate_value == False:
                 return "❌ Миграция отключена! Включите migrate=true в appconfig.ini"
         except Exception as e:
             result += f"⚠ Не удалось проверить миграцию: {str(e)}\n\n"
+        
+        # Включаем миграцию принудительно
+        try:
+            db._adapter.migrate = True
+            if hasattr(db._adapter, 'migrate_enabled'):
+                db._adapter.migrate_enabled = True
+        except:
+            pass
         
         all_tables = sorted(db.tables)
         result += f"Таблиц для создания: {len(all_tables)}\n\n"
@@ -277,12 +284,72 @@ def create_tables_simple():
                     db(db[table_name].id > 0).select(limitby=(0, 1))
                     exists.append(table_name)
                     result += f"✓ {table_name}: уже существует\n"
+                    try:
+                        db.commit()
+                    except:
+                        pass
                     continue
                 except Exception as check_err:
                     error_str = str(check_err)
                     if "does not exist" in error_str or "relation" in error_str.lower():
-                        # Таблица не существует, создаем
-                        pass
+                        # Таблица не существует, создаем через обращение к таблице
+                        # Web2py должен автоматически создать таблицу при первом обращении, если migrate=True
+                        try:
+                            db.rollback()
+                            table = db[table_name]
+                            
+                            # Пробуем получить SQL через адаптер
+                            # В некоторых версиях web2py есть метод create_table_sql
+                            sql_created = False
+                            
+                            # Пробуем через адаптер
+                            try:
+                                if hasattr(db._adapter, 'create_table_sql'):
+                                    sql = db._adapter.create_table_sql(table)
+                                    if sql:
+                                        db.executesql(sql)
+                                        db.commit()
+                                        created.append(table_name)
+                                        result += f"✓ {table_name}: создана (через SQL)\n"
+                                        sql_created = True
+                            except:
+                                pass
+                            
+                            if not sql_created:
+                                # Пробуем через метод адаптера create_table напрямую
+                                try:
+                                    # В некоторых версиях web2py есть метод create_table в адаптере
+                                    if hasattr(db._adapter, 'create_table'):
+                                        db._adapter.create_table(table)
+                                        db.commit()
+                                        created.append(table_name)
+                                        result += f"✓ {table_name}: создана (через адаптер)\n"
+                                        sql_created = True
+                                except Exception as adapter_err:
+                                    # Если не получилось через адаптер, пробуем через обращение к таблице
+                                    # Web2py должен автоматически создать таблицу при первом обращении
+                                    try:
+                                        # Пробуем простой select - это должно заставить web2py создать таблицу
+                                        # Но только если migrate=True и таблица не существует
+                                        db(db[table_name].id > 0).select(limitby=(0, 0))
+                                        db.commit()
+                                        created.append(table_name)
+                                        result += f"✓ {table_name}: создана (через обращение)\n"
+                                        sql_created = True
+                                    except Exception as select_err:
+                                        # Если не получилось, пробуем через insert с минимальными данными
+                                        # Но это сложно, так как нужно знать структуру
+                                        # Лучше всего - использовать appadmin или создать через SQL вручную
+                                        if not sql_created:
+                                            raise Exception(f"Не удалось создать таблицу: {str(select_err)}")
+                        except Exception as create_err:
+                            error_str = str(create_err)
+                            try:
+                                db.rollback()
+                            except:
+                                pass
+                            result += f"✗ {table_name}: {error_str[:150]}\n"
+                            errors.append(f"{table_name}: {error_str[:200]}")
                     else:
                         # Другая ошибка
                         result += f"⚠ {table_name}: ошибка проверки - {error_str[:100]}\n"
@@ -290,31 +357,16 @@ def create_tables_simple():
                             db.rollback()
                         except:
                             pass
-                
-                # Пробуем создать таблицу
-                table = db[table_name]
-                table._create_table()
-                
-                # Коммитим создание
-                db.commit()
-                
-                created.append(table_name)
-                result += f"✓ {table_name}: создана\n"
+                        errors.append(f"{table_name}: {error_str[:200]}")
+                        
             except Exception as e:
                 error_str = str(e)
-                # Откатываем после ошибки
                 try:
                     db.rollback()
                 except:
                     pass
-                
-                # Проверяем, может таблица уже существует
-                if "already exists" in error_str.lower() or "duplicate" in error_str.lower() or "уже существует" in error_str.lower():
-                    exists.append(table_name)
-                    result += f"✓ {table_name}: уже существует\n"
-                else:
-                    result += f"✗ {table_name}: {error_str[:150]}\n"
-                    errors.append(f"{table_name}: {error_str[:200]}")
+                result += f"✗ {table_name}: {error_str[:150]}\n"
+                errors.append(f"{table_name}: {error_str[:200]}")
         
         result += f"\n\nИтого: создано {len(created)}, существует {len(exists)}, ошибок {len(errors)}"
         
@@ -329,6 +381,11 @@ def create_tables_simple():
             result += f"\n\n✅ Обработано {len(created) + len(exists)} таблиц!"
             result += f"\nПроверьте: https://eleotapp.ru/adminlte5/test/test_tables"
             result += f"\nИли откройте: https://eleotapp.ru/adminlte5/appadmin"
+        else:
+            result += f"\n\n⚠ Не удалось создать таблицы автоматически."
+            result += f"\n\nПопробуйте открыть appadmin - web2py создаст таблицы при первом обращении:"
+            result += f"\nhttps://eleotapp.ru/adminlte5/appadmin"
+            result += f"\n\nИли создайте таблицы вручную через psql."
         
         return result
     except Exception as e:
