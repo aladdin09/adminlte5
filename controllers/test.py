@@ -14,7 +14,7 @@ def test_create_customer():
         # Проверяем, существует ли таблица
         if 'customers' not in db.tables:
             return "❌ Таблица 'customers' не найдена в db.tables"
-        result += "✓ Таблица 'customers' найдена\n"
+        result += "✓ Таблица 'customers' найдена в моделях\n"
         
         # Проверяем структуру таблицы
         try:
@@ -23,6 +23,29 @@ def test_create_customer():
         except Exception as e:
             result += f"✗ Ошибка получения структуры: {str(e)}\n"
             return result
+        
+        # Проверяем, существует ли таблица в PostgreSQL
+        try:
+            db.rollback()
+            # Пробуем простой SELECT - если таблица не существует, будет ошибка
+            db(db.customers.id > 0).select(limitby=(0, 1))
+            result += "✓ Таблица 'customers' существует в PostgreSQL\n"
+        except Exception as check_err:
+            error_str = str(check_err)
+            if "does not exist" in error_str or "relation" in error_str.lower():
+                result += "✗ Таблица 'customers' НЕ существует в PostgreSQL\n"
+                result += "Попытка создать таблицу...\n"
+                try:
+                    db.rollback()
+                    db.customers._create_table()
+                    db.commit()
+                    result += "✓ Таблица 'customers' создана в PostgreSQL\n"
+                except Exception as create_err:
+                    db.rollback()
+                    result += f"✗ Ошибка создания таблицы: {str(create_err)}\n"
+                    return result
+            else:
+                result += f"⚠ Ошибка проверки: {error_str[:200]}\n"
         
         # Пробуем создать тестового клиента
         try:
