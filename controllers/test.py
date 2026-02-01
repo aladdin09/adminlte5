@@ -130,6 +130,90 @@ def test_table_structure():
         import traceback
         return f"Ошибка проверки структуры таблицы: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
+def create_tables():
+    """Принудительное создание таблиц через обращение к ним"""
+    try:
+        result = "Создание таблиц в базе данных:\n\n"
+        
+        # Проверяем настройки миграции
+        try:
+            migrate_enabled = db._adapter.migrate_enabled
+            result += f"Миграция включена: {migrate_enabled}\n\n"
+        except:
+            result += "⚠ Не удалось проверить настройки миграции\n\n"
+            migrate_enabled = True
+        
+        if not migrate_enabled:
+            result += "⚠ ВНИМАНИЕ: Миграция отключена! Включите migrate=true в appconfig.ini\n\n"
+            return result + "\nНельзя создать таблицы при отключенной миграции!"
+        
+        # Получаем список всех определенных таблиц
+        all_tables = list(db.tables)
+        result += f"Таблиц определено в моделях: {len(all_tables)}\n\n"
+        
+        created = []
+        exists = []
+        errors = []
+        
+        # Пробуем создать/проверить каждую таблицу
+        # Web2py создаст таблицу автоматически при первом обращении, если migrate=True
+        for table_name in sorted(all_tables):
+            try:
+                # Пробуем выполнить простой запрос - это заставит web2py создать таблицу
+                # если она не существует
+                try:
+                    # Простой SELECT с LIMIT 0 - не вернет данных, но создаст таблицу если нужно
+                    db(db[table_name].id > 0).select(limitby=(0, 1))
+                    exists.append(table_name)
+                    result += f"✓ {table_name}: существует\n"
+                except Exception as query_err:
+                    error_str = str(query_err)
+                    if "does not exist" in error_str or "relation" in error_str.lower():
+                        # Таблица не существует, пытаемся создать через _create_table
+                        try:
+                            db[table_name]._create_table()
+                            created.append(table_name)
+                            result += f"✓ {table_name}: создана\n"
+                        except Exception as create_err:
+                            result += f"✗ {table_name}: ошибка создания - {str(create_err)}\n"
+                            errors.append(f"{table_name}: {str(create_err)}")
+                    else:
+                        # Другая ошибка
+                        result += f"✗ {table_name}: ошибка запроса - {error_str}\n"
+                        errors.append(f"{table_name}: {error_str}")
+                        
+            except Exception as e:
+                error_msg = str(e)
+                result += f"✗ {table_name}: ошибка - {error_msg}\n"
+                errors.append(f"{table_name}: {error_msg}")
+        
+        # Коммитим транзакцию
+        try:
+            db.commit()
+            result += "\n✓ Транзакция закоммичена"
+        except Exception as commit_err:
+            result += f"\n⚠ Ошибка коммита: {str(commit_err)}"
+            try:
+                db.rollback()
+                result += " (откат выполнен)"
+            except:
+                pass
+        
+        result += f"\n\nИтого: создано {len(created)}, существует {len(exists)}, ошибок {len(errors)}"
+        if errors:
+            result += f"\n\nОшибки:\n"
+            for err in errors[:10]:
+                result += f"  - {err}\n"
+        
+        if created:
+            result += f"\n\n✓ Успешно создано {len(created)} таблиц! Попробуйте открыть:\n"
+            result += "https://eleotapp.ru/adminlte5/default/index"
+        
+        return result
+    except Exception as e:
+        import traceback
+        return f"Ошибка создания таблиц: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+
 def test_simple_query():
     """Простой тест запроса к customers"""
     try:
