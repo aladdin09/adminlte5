@@ -1,0 +1,118 @@
+{{
+import io
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+pass
+}}
+{{
+if not HAS_REPORTLAB:
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    response.write(b'<html><body><p>Установите reportlab: pip install reportlab</p></body></html>')
+else:
+    company_name = response._vars.get('company_name', 'Дома Кубани')
+    company_info = response._vars.get('company_info') or {}
+    project = response._vars.get('project')
+    complect = response._vars.get('complect')
+    customer = response._vars.get('customer')
+    items_numbered = response._vars.get('items_numbered') or []
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles = getSampleStyleSheet()
+    style_h1 = ParagraphStyle(name='H1', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=16)
+    style_h2 = ParagraphStyle(name='H2', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=12)
+    style_n = styles['Normal']
+    elements = []
+    
+    elements.append(Paragraph(company_name, style_h1))
+    elements.append(Paragraph(company_info.get('description', ''), style_n))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph('Коммерческое предложение', style_h2))
+    elements.append(Spacer(1, 8))
+    
+    if project:
+        ptext = 'Проект: %s' % (project.name or '')
+        if project.project_number:
+            ptext += ' &nbsp;&nbsp; Номер: %s' % project.project_number
+        elements.append(Paragraph(ptext, style_n))
+        if project.description:
+            desc = project.description[:200] + '...' if len(project.description or '') > 200 else (project.description or '')
+            elements.append(Paragraph('Описание: %s' % desc, style_n))
+        elements.append(Spacer(1, 8))
+    
+    if complect:
+        ptext = 'Комплект № %s' % complect.id
+        if complect.description:
+            desc = complect.description[:150] + '...' if len(complect.description or '') > 150 else (complect.description or '')
+            ptext += ' &nbsp;&nbsp; %s' % desc
+        elements.append(Paragraph(ptext, style_n))
+        date_str = complect.created_on.strftime('%d.%m.%Y') if complect.created_on else '-'
+        elements.append(Paragraph('Дата: %s' % date_str, style_n))
+        elements.append(Spacer(1, 8))
+    
+    if customer:
+        ptext = 'Клиент: %s' % (customer.name or '')
+        if customer.phone:
+            ptext += ' &nbsp;&nbsp; Тел.: %s' % customer.phone
+        if customer.email:
+            ptext += ' &nbsp;&nbsp; Email: %s' % customer.email
+        elements.append(Paragraph(ptext, style_n))
+        if customer.address:
+            elements.append(Paragraph('Адрес: %s' % customer.address, style_n))
+        elements.append(Spacer(1, 12))
+    
+    elements.append(Paragraph('Позиции комплекта', style_h2))
+    elements.append(Spacer(1, 6))
+    
+    if items_numbered:
+        data = [['№', 'Наименование', 'Кол-во', 'Ед.', 'Цена, ₽', 'Сумма, ₽']]
+        for num, item in items_numbered:
+            data.append([
+                str(num),
+                (item.item_name or '')[:60],
+                str(item.quantity or ''),
+                item.unit or 'шт',
+                '%.2f' % float(item.price or 0),
+                '%.2f' % float(item.total or 0),
+            ])
+        total_val = float(complect.total_amount or 0) if complect else 0
+        data.append(['', '', '', '', 'Итого:', '%.2f' % total_val])
+        
+        t = Table(data, colWidths=[1.2*cm, 7*cm, 1.5*cm, 1.2*cm, 2.5*cm, 2.5*cm])
+        t.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('ALIGN', (2, 0), (2, -1), 'CENTER'),
+            ('ALIGN', (3, 0), (3, -1), 'CENTER'),
+            ('ALIGN', (4, 0), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ]))
+        elements.append(t)
+    else:
+        elements.append(Paragraph('Позиции комплекта отсутствуют.', style_n))
+    
+    elements.append(Spacer(1, 20))
+    footer_text = 'Документ сформирован автоматически. %s' % company_name
+    footer_style = ParagraphStyle(name='Small', parent=style_n, fontSize=8, textColor=colors.grey)
+    elements.append(Paragraph(footer_text, footer_style))
+    
+    doc.build(elements)
+    pdf_bytes = buffer.getvalue()
+    response.headers['Content-Type'] = 'application/pdf'
+    filename = 'kp_complect_%s.pdf' % (complect.id if complect else 0)
+    response.headers['Content-Disposition'] = 'inline; filename="%s"' % filename
+    response.write(pdf_bytes)
+pass
+}}
