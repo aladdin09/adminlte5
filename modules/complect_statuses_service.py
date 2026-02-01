@@ -25,6 +25,11 @@ def get_status_by_id(db, status_id):
     try:
         return db.complect_statuses(status_id) or None
     except Exception as e:
+        # Откатываем транзакцию при ошибке
+        try:
+            db.rollback()
+        except:
+            pass
         return None
 
 
@@ -36,7 +41,16 @@ def get_all_statuses(db, is_active=None, order_by='sort_order'):
             query = query & (db.complect_statuses.is_active == is_active)
         return db(query).select(orderby=db.complect_statuses[order_by])
     except Exception as e:
-        return db().select(db.complect_statuses.id)
+        # Откатываем транзакцию при ошибке
+        try:
+            db.rollback()
+        except:
+            pass
+        # Пробуем вернуть пустой результат
+        try:
+            return db().select(db.complect_statuses.id)
+        except:
+            return []
 
 
 def update_status(db, status_id, **kwargs):
@@ -79,4 +93,13 @@ def search_statuses(db, search_term, is_active=None):
             query = query & (db.complect_statuses.is_active == is_active)
         return db(query).select(orderby=db.complect_statuses.sort_order)
     except Exception as e:
-        return db().select(db.complect_statuses.id)
+        # Откатываем транзакцию при ошибке
+        try:
+            db.rollback()
+        except:
+            pass
+        # Пробуем вернуть пустой результат
+        try:
+            return db().select(db.complect_statuses.id)
+        except:
+            return []
