@@ -400,35 +400,3 @@ def set_status_zakaz():
         redirect(URL('default', 'index'))
 
 
-def commercial_proposal():
-    """КП по комплекту — HTML (без внешних библиотек). Сохранить в PDF: Печать (Ctrl+P) → Сохранить как PDF."""
-    complect_id = request.args(0) or redirect(URL('default', 'index'))
-    try:
-        import complects_service
-        import complect_items_service
-        import customers_service
-        complect = complects_service.get_complect_by_id(db, complect_id)
-        if not complect:
-            session.flash = 'Комплект не найден'
-            redirect(URL('default', 'index'))
-        customer = customers_service.get_customer_by_id(db, complect.customer_id) if complect.customer_id else None
-        project = None
-        if complect.project_id:
-            import projects_service
-            project = projects_service.get_project_by_id(db, complect.project_id)
-        complect_items = complect_items_service.get_all_complect_items(db, complect_id=complect_id)
-        items_numbered = [(i + 1, item) for i, item in enumerate(complect_items)]
-        return dict(
-            company_name='Дома Кубани',
-            company_info={'name': 'Дома Кубани', 'description': 'Строительная компания'},
-            project=project,
-            complect=complect,
-            customer=customer,
-            complect_items=complect_items,
-            items_numbered=items_numbered,
-        )
-    except HTTP:
-        raise
-    except Exception as e:
-        session.flash = 'Ошибка: %s' % str(e)
-        redirect(URL('default', 'index'))

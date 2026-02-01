@@ -211,12 +211,6 @@
                   <td><strong>{{=f"{float(comp.complects.total_amount or 0):,.2f}".replace(',', ' ')}} ₽</strong></td>
                   <td>{{=comp.complects.created_on.strftime('%d.%m.%Y %H:%M') if comp.complects.created_on else '-'}}</td>
                   <td onclick="event.stopPropagation();">
-                    {{if comp.complects.status_id == complect_status_kp_soglasovano_id or comp.complects.status_id == complect_status_kp_otpravleno_id or (not has_non_chernovik and (not comp.complect_statuses or comp.complect_statuses.name != 'Черновик')):}}
-                    <a href="{{=URL('complects', 'commercial_proposal', args=[comp.complects.id])}}" 
-                       class="btn btn-sm btn-warning ml-1" title="Коммерческое предложение (PDF)" target="_blank" rel="noopener noreferrer">
-                      <i class="bi bi-file-pdf-o"></i> КП
-                    </a>
-                    {{pass}}
                     {{if comp.complect_statuses and comp.complect_statuses.name != 'Черновик' and comp.complects.status_id != complect_status_ispravlenie_id and comp.complects.status_id != complect_status_kp_soglasovano_id and comp.complects.status_id != complect_status_kp_otpravleno_id and comp.complects.status_id != complect_status_zakaz_id:}}
                     <a href="{{=URL('complects', 'set_status_ispravlenie', args=[comp.complects.id])}}" 
                        class="btn btn-sm btn-info ml-1" title="Исправить">

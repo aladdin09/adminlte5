@@ -37,10 +37,42 @@ def create_project(db, name, customer_id=None, request_id=None, order_id=None,
         if now is None:
             now = datetime.utcnow()
         # По умолчанию — статус «Начальный», пока у проекта нет комплектов
+        # Если статус не найден, берем первый доступный активный статус
         if status_id is None:
             import project_statuses_service
             row = project_statuses_service.get_status_by_name(db, 'Начальный')
-            status_id = row.id if row else None
+            if row:
+                status_id = row.id
+            else:
+                # Если статус "Начальный" не найден, берем первый активный статус
+                all_statuses = project_statuses_service.get_all_statuses(db, is_active=True, order_by='sort_order')
+                if all_statuses:
+                    first_status = all_statuses.first()
+                    if first_status:
+                        status_id = first_status.id
+                    else:
+                        # Если нет активных статусов, берем любой первый
+                        any_status = db(db.project_statuses.id > 0).select(db.project_statuses.id, limitby=(0, 1)).first()
+                        status_id = any_status.id if any_status else None
+                else:
+                    # Если вообще нет статусов, берем любой первый (даже неактивный)
+                    any_status = db(db.project_statuses.id > 0).select(db.project_statuses.id, limitby=(0, 1)).first()
+                    status_id = any_status.id if any_status else None
+        
+        # Проверяем, что status_id существует в базе (если не None)
+        if status_id is not None:
+            try:
+                status_exists = db(db.project_statuses.id == status_id).select(db.project_statuses.id, limitby=(0, 1)).first()
+                if not status_exists:
+                    # Статус не существует, пытаемся найти любой доступный
+                    any_status = db(db.project_statuses.id > 0).select(db.project_statuses.id, limitby=(0, 1)).first()
+                    if any_status:
+                        status_id = any_status.id
+                    else:
+                        return {'success': False, 'error': 'В базе данных нет статусов проектов. Создайте хотя бы один статус.'}
+            except Exception:
+                # Если проверка не удалась, оставляем status_id как есть
+                pass
         project_id = db.projects.insert(
             name=name,
             customer_id=customer_id,
