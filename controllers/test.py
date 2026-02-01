@@ -6,6 +6,50 @@
 def index():
     return "Тестовый контроллер работает!"
 
+def test_create_customer():
+    """Тест создания клиента"""
+    try:
+        result = "Тест создания клиента:\n\n"
+        
+        # Проверяем, существует ли таблица
+        if 'customers' not in db.tables:
+            return "❌ Таблица 'customers' не найдена в db.tables"
+        result += "✓ Таблица 'customers' найдена\n"
+        
+        # Проверяем структуру таблицы
+        try:
+            table = db.customers
+            result += f"✓ Поля таблицы: {', '.join(table.fields)}\n"
+        except Exception as e:
+            result += f"✗ Ошибка получения структуры: {str(e)}\n"
+            return result
+        
+        # Пробуем создать тестового клиента
+        try:
+            db.rollback()
+            test_id = db.customers.insert(
+                name='Тестовый клиент',
+                phone='+7-999-999-99-99',
+                email='test@test.com'
+            )
+            db.commit()
+            result += f"✓ Тестовый клиент создан с ID: {test_id}\n"
+            
+            # Удаляем тестового клиента
+            db(db.customers.id == test_id).delete()
+            db.commit()
+            result += "✓ Тестовый клиент удален\n"
+        except Exception as e:
+            db.rollback()
+            result += f"✗ Ошибка создания клиента: {str(e)}\n"
+            import traceback
+            result += f"\nTraceback:\n{traceback.format_exc()}\n"
+        
+        return result
+    except Exception as e:
+        import traceback
+        return f"Критическая ошибка: {str(e)}\n\n{traceback.format_exc()}"
+
 def test_db():
     try:
         # Пробуем разные варианты запросов

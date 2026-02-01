@@ -47,6 +47,13 @@ def index():
             redirect(URL('customers', 'customer', args=[form_customer.vars.id]))
         elif form_customer.errors:
             show_customer_panel = True
+            # Логируем ошибки формы для диагностики
+            import logging
+            try:
+                error_msg = ', '.join([f"{k}: {v}" for k, v in form_customer.errors.items()])
+                logging.error(f"Ошибки формы клиента: {error_msg}")
+            except:
+                pass
         if request.vars.get('open_customer_panel') == '1':
             show_customer_panel = True
         data = get_dashboard_data(db, request)
