@@ -247,22 +247,49 @@ def create_tables_simple():
         
         # Проверяем миграцию
         try:
-            migrate_enabled = db._adapter.migrate_enabled
-            if not migrate_enabled:
+            # В новой версии используется migrate вместо migrate_enabled
+            migrate_value = getattr(db._adapter, 'migrate', True)
+            if hasattr(db._adapter, 'migrate_enabled'):
+                migrate_value = db._adapter.migrate_enabled
+            result += f"Миграция: {migrate_value}\n\n"
+            if migrate_value == False:
                 return "❌ Миграция отключена! Включите migrate=true в appconfig.ini"
-        except:
-            pass
+        except Exception as e:
+            result += f"⚠ Не удалось проверить миграцию: {str(e)}\n\n"
         
         all_tables = sorted(db.tables)
         result += f"Таблиц для создания: {len(all_tables)}\n\n"
         
         created = []
+        exists = []
         errors = []
         
         for table_name in all_tables:
             try:
                 # Откатываем перед каждой таблицей
-                db.rollback()
+                try:
+                    db.rollback()
+                except:
+                    pass
+                
+                # Проверяем, существует ли таблица
+                try:
+                    db(db[table_name].id > 0).select(limitby=(0, 1))
+                    exists.append(table_name)
+                    result += f"✓ {table_name}: уже существует\n"
+                    continue
+                except Exception as check_err:
+                    error_str = str(check_err)
+                    if "does not exist" in error_str or "relation" in error_str.lower():
+                        # Таблица не существует, создаем
+                        pass
+                    else:
+                        # Другая ошибка
+                        result += f"⚠ {table_name}: ошибка проверки - {error_str[:100]}\n"
+                        try:
+                            db.rollback()
+                        except:
+                            pass
                 
                 # Пробуем создать таблицу
                 table = db[table_name]
@@ -282,23 +309,26 @@ def create_tables_simple():
                     pass
                 
                 # Проверяем, может таблица уже существует
-                if "already exists" in error_str.lower() or "duplicate" in error_str.lower():
-                    created.append(table_name)
+                if "already exists" in error_str.lower() or "duplicate" in error_str.lower() or "уже существует" in error_str.lower():
+                    exists.append(table_name)
                     result += f"✓ {table_name}: уже существует\n"
                 else:
                     result += f"✗ {table_name}: {error_str[:150]}\n"
                     errors.append(f"{table_name}: {error_str[:200]}")
         
-        result += f"\n\nИтого: создано/существует {len(created)}, ошибок {len(errors)}"
+        result += f"\n\nИтого: создано {len(created)}, существует {len(exists)}, ошибок {len(errors)}"
         
         if errors:
-            result += f"\n\nОшибки:\n"
+            result += f"\n\nОшибки (первые 10):\n"
             for err in errors[:10]:
                 result += f"  - {err}\n"
+            if len(errors) > 10:
+                result += f"  ... и еще {len(errors) - 10} ошибок\n"
         
-        if created:
-            result += f"\n\n✅ Обработано {len(created)} таблиц!"
+        if created or exists:
+            result += f"\n\n✅ Обработано {len(created) + len(exists)} таблиц!"
             result += f"\nПроверьте: https://eleotapp.ru/adminlte5/test/test_tables"
+            result += f"\nИли откройте: https://eleotapp.ru/adminlte5/appadmin"
         
         return result
     except Exception as e:
