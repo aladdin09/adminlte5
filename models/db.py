@@ -51,7 +51,7 @@ except Exception as config_error:
     class DefaultConfig:
         def get(self, key, default=None):
             defaults = {
-                "db.uri": "sqlite://storage.sqlite",
+                "db.uri": "postgres://smetadoma:eY^x7ZQJ1OkQf8Y3g^Z2WvUMv1@localhost:5432/smetadoma_db",
                 "db.pool_size": 10,
                 "db.migrate": True,
                 "app.production": False,
@@ -81,10 +81,10 @@ except Exception as config_error:
 
 if "GAE_APPLICATION" not in os.environ:
     # ---------------------------------------------------------------------
-    # if NOT running on Google App Engine use SQLite or other DB
+    # if NOT running on Google App Engine use PostgreSQL or other DB
     # ---------------------------------------------------------------------
-    # Подключение к базе данных SQLite
-    # Путь sqlite://storage.sqlite указывает на файл databases/storage.sqlite
+    # Подключение к базе данных PostgreSQL
+    # Формат: postgres://username:password@host:port/database
     try:
         db = DAL(configuration.get("db.uri"),
                  pool_size=configuration.get("db.pool_size"),
