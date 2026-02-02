@@ -17,51 +17,115 @@ except ImportError as import_err:
         get_dashboard_data = dashboard_data.get_dashboard_data
         get_status_color = dashboard_data.get_status_color
     except Exception as import_err2:
-        # Если и это не помогло, создадим заглушки
-        def get_dashboard_data(db, request):
-            return {'error': f'Ошибка импорта dashboard_data: {str(import_err)}, {str(import_err2)}'}
+        # Если и это не помогло, создадим заглушки (полный набор ключей для шаблонов)
+        def get_dashboard_data(db, request, auth=None):
+            return dict(
+                error=f'Ошибка импорта dashboard_data: {str(import_err)}, {str(import_err2)}',
+                dashboard_stats=[], total_projects=0, total_customers=0, total_orders=0,
+                projects=[], all_customers=[], all_statuses=[], status_colors={},
+                project_specification_sums={}, dashboard_specification_total=0,
+                filter_customer='', filter_status='', filter_name='', filter_project_number='',
+            )
         def get_status_color(status_name):
             return 'secondary'
 except Exception:
     # Полная заглушка на случай любой другой ошибки при импорте
-    def get_dashboard_data(db, request):
-        return {'error': 'Критическая ошибка импорта dashboard_data'}
+    def get_dashboard_data(db, request, auth=None):
+        return dict(
+            error='Критическая ошибка импорта dashboard_data',
+            dashboard_stats=[], total_projects=0, total_customers=0, total_orders=0,
+            projects=[], all_customers=[], all_statuses=[], status_colors={},
+            project_specification_sums={}, dashboard_specification_total=0,
+            filter_customer='', filter_status='', filter_name='', filter_project_number='',
+        )
     def get_status_color(status_name):
         return 'secondary'
 
 
+@auth.requires_login()
 def index():
     """
     Дашборд + правая панель добавления клиента (главная страница).
+    Неавторизованные пользователи перенаправляются на страницу входа.
     """
+    # Откатываем любые незавершенные транзакции в начале
+    try:
+        db.rollback()
+    except:
+        pass
+    
     try:
         show_customer_panel = False
+        
+        # Откатываем транзакцию перед созданием формы
+        try:
+            db.rollback()
+        except:
+            pass
+        
         form_customer = SQLFORM(
             db.customers,
             submit_button='Добавить',
             _id='customerForm',
             _name='customer_form'
         )
-        if form_customer.process(formname='customer_form').accepted:
-            session.flash = 'Клиент успешно добавлен'
-            redirect(URL('customers', 'customer', args=[form_customer.vars.id]))
-        elif form_customer.errors:
-            show_customer_panel = True
-            # Логируем ошибки формы для диагностики
-            import logging
+        
+        # Обрабатываем форму с обработкой ошибок транзакций
+        try:
+            form_result = form_customer.process(formname='customer_form')
+            if form_result.accepted:
+                try:
+                    db.commit()
+                    session.flash = 'Клиент успешно добавлен'
+                    redirect(URL('customers', 'customer', args=[form_customer.vars.id]))
+                except Exception as commit_err:
+                    try:
+                        db.rollback()
+                    except:
+                        pass
+                    # Если commit не удался, показываем ошибку
+                    show_customer_panel = True
+                    form_customer.errors = {'_error': 'Ошибка сохранения: ' + str(commit_err)}
+            elif form_customer.errors:
+                try:
+                    db.rollback()
+                except:
+                    pass
+                show_customer_panel = True
+                # Логируем ошибки формы для диагностики
+                import logging
+                try:
+                    error_msg = ', '.join([f"{k}: {v}" for k, v in form_customer.errors.items()])
+                    logging.error(f"Ошибки формы клиента: {error_msg}")
+                except:
+                    pass
+        except Exception as form_err:
+            # Если обработка формы вызвала ошибку, откатываем транзакцию
             try:
-                error_msg = ', '.join([f"{k}: {v}" for k, v in form_customer.errors.items()])
-                logging.error(f"Ошибки формы клиента: {error_msg}")
+                db.rollback()
             except:
                 pass
+            show_customer_panel = True
+            form_customer.errors = {'_error': 'Ошибка обработки формы: ' + str(form_err)}
+        
         if request.vars.get('open_customer_panel') == '1':
             show_customer_panel = True
-        data = get_dashboard_data(db, request)
+        
+        # Откатываем транзакцию перед вызовом get_dashboard_data
+        try:
+            db.rollback()
+        except:
+            pass
+        
+        data = get_dashboard_data(db, request, auth)
         form_customer.element('input[type=submit]')['_class'] = 'btn btn-primary btn-block'
         data['form_customer'] = form_customer
         data['show_customer_panel'] = show_customer_panel
         if 'error' not in data:
             data.setdefault('error', None)
+        # Гарантируем наличие переменных для шаблона (на случай неполного ответа get_dashboard_data)
+        data.setdefault('project_specification_sums', {})
+        data.setdefault('dashboard_specification_total', 0)
         # Если есть ошибка в данных, логируем её
         if data.get('error'):
             import logging
@@ -92,12 +156,49 @@ def index():
             raise HTTP(500, f"Ошибка в default/index: {str(e)}")
 
 
+def migrate_specification_statuses():
+    """
+    Однократная миграция: копирует данные из complect_statuses в specification_statuses.
+    Вызовите один раз: /adminlte5/default/migrate_specification_statuses
+    если при создании спецификации была ошибка FK (status_id не найден в specification_statuses).
+    """
+    try:
+        # Копируем строки из complect_statuses в specification_statuses (PostgreSQL / SQLite)
+        _adapter = db._adapter.__class__.__module__
+        if 'postgres' in _adapter:
+            db.executesql(
+                "INSERT INTO specification_statuses (id, name, description, sort_order, is_active) "
+                "SELECT id, name, description, sort_order, is_active FROM complect_statuses "
+                "ON CONFLICT (id) DO NOTHING"
+            )
+            # Сбрасываем sequence, чтобы следующий INSERT без id не давал дубликат ключа
+            db.executesql(
+                "SELECT setval(pg_get_serial_sequence('specification_statuses', 'id')::regclass, "
+                "COALESCE((SELECT MAX(id) FROM specification_statuses), 0))"
+            )
+        else:
+            # SQLite и др.
+            db.executesql(
+                "INSERT OR IGNORE INTO specification_statuses (id, name, description, sort_order, is_active) "
+                "SELECT id, name, description, sort_order, is_active FROM complect_statuses"
+            )
+        db.commit()
+        session.flash = 'Миграция выполнена: статусы скопированы из complect_statuses в specification_statuses.'
+    except Exception as e:
+        try:
+            db.rollback()
+        except:
+            pass
+        session.flash = f'Ошибка миграции: {str(e)}'
+    redirect(URL('default', 'index'))
+
+
 def get_status_color_by_id(status_id):
     """
     Возвращает цвет для статуса по ID
     """
     try:
-        status = db.complect_statuses(status_id)
+        status = db.specification_statuses(status_id)
         if status:
             return get_status_color(status.name)
     except:
@@ -143,6 +244,10 @@ def user():
     to decorate functions that need access control
     also notice there is http://..../[app]/appadmin/manage/auth to allow administrator to manage users
     """
+    # Чтобы на странице входа показывались ошибки (неверный пароль и т.д.)
+    if request.args(0) == 'login' and session.flash:
+        response.flash = session.flash
+        session.flash = None
     return dict(form=auth())
 
 # ---- action to server uploaded static content (required) ---

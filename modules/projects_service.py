@@ -5,11 +5,19 @@
 
 from datetime import datetime
 
+def _now():
+    """Текущее время в часовом поясе приложения (как request.now), иначе UTC."""
+    try:
+        from gluon import current
+        return current.request.now
+    except Exception:
+        return datetime.utcnow()
+
 
 def create_project(db, name, customer_id=None, request_id=None, order_id=None,
                    project_number=None, start_date=None, end_date=None,
                    status_id=None, budget=0, description=None, notes=None,
-                   sla_hours=None, manager_id=None, now=None):
+                   sla_hours=None, manager_id=None):
     """
     Создать новый проект
     
@@ -28,14 +36,11 @@ def create_project(db, name, customer_id=None, request_id=None, order_id=None,
         notes: примечания
         sla_hours: SLA - максимальное время в статусе (часы)
         manager_id: ID ответственного менеджера
-        now: текущее время (datetime)
     
     Returns:
         dict: результат операции {'success': bool, 'id': int, 'error': str}
     """
     try:
-        if now is None:
-            now = datetime.utcnow()
         # По умолчанию — статус «Начальный», пока у проекта нет комплектов
         # Если статус не найден, берем первый доступный активный статус
         if status_id is None:
@@ -86,8 +91,7 @@ def create_project(db, name, customer_id=None, request_id=None, order_id=None,
             description=description,
             notes=notes,
             sla_hours=sla_hours,
-            manager_id=manager_id,
-            status_started_at=now
+            manager_id=manager_id
         )
         db.commit()
         return {'success': True, 'id': project_id}
@@ -166,9 +170,9 @@ def update_project(db, project_id, **kwargs):
                          'budget', 'description', 'notes', 'sla_hours', 'manager_id']
         update_data = {k: v for k, v in kwargs.items() if k in allowed_fields}
         
-        # Если меняется статус, обновляем дату входа в статус
+        # Если меняется статус, обновляем дату входа в статус (тот же пояс, что и created_on)
         if 'status_id' in update_data:
-            update_data['status_started_at'] = datetime.utcnow()
+            update_data['status_started_at'] = _now()
         
         if update_data:
             db(db.projects.id == project_id).update(**update_data)
@@ -199,7 +203,7 @@ def update_project_status(db, project_id, status_id):
             return {'success': False, 'error': 'Проект не найден'}
         db(db.projects.id == pid).update(
             status_id=sid,
-            status_started_at=datetime.utcnow()
+            status_started_at=_now()
         )
         db.commit()
         return {'success': True}

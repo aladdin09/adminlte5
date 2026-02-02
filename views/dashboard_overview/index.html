@@ -50,7 +50,7 @@
     </div>
   </div>
   <div class="row"><h3 class="mb-3"><i class="bi bi-list-ul"></i> Проекты по статусам</h3></div>
-  <div class="row d-flex flex-nowrap mb-4" style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding-top: 14px; padding-bottom: 14px;">
+  <div class="row mb-4" style="padding-top: 14px; padding-bottom: 14px;">
     {{for stat in dashboard_stats:}}
     <div class="col-auto mb-4 mt-2 dashboard-status-card" style="min-width: 180px; flex-shrink: 0; cursor: pointer;" data-status-name="{{=stat['name']}}" title="Показать проекты со статусом «{{=stat['name']}}»">
       <div class="card border-{{=stat['color']}} shadow-sm h-100">
@@ -83,7 +83,7 @@
               <thead class="thead-light">
                 <tr>
                   <th>Номер проекта</th><th>Название</th><th>Клиент</th><th>Статус</th>
-                  <th title="Сумма комплектов">Общая сумма комплекта</th><th>Дата начала</th><th>Дата окончания</th><th>Дата создания</th>
+                  <th title="Сумма спецификаций">Общая сумма спецификации</th><th>Дата начала</th><th>Дата окончания</th><th>Дата создания</th>
                 </tr>
               </thead>
               <tbody>
@@ -94,7 +94,7 @@
                   <td>{{=project.projects.name}}</td>
                   <td onclick="event.stopPropagation();">{{if project.customers:}}<a href="{{=URL('customers', 'customer', args=[project.projects.customer_id])}}">{{=project.customers.name}}</a>{{else:}}-{{pass}}</td>
                   <td>{{if project.project_statuses:}}{{status_color = status_colors.get(project.projects.status_id, 'secondary')}}<span class="badge bg-{{=status_color}}">{{=project.project_statuses.name}}</span>{{else:}}<span class="badge bg-secondary">-</span>{{pass}}</td>
-                  <td data-order="{{=float(project_complect_sums.get(project.projects.id, 0))}}"><strong>{{=f"{project_complect_sums.get(project.projects.id, 0):,.2f}".replace(',', ' ')}} ₽</strong></td>
+                  <td data-order="{{=float(project_specification_sums.get(project.projects.id, 0))}}"><strong>{{=f"{project_specification_sums.get(project.projects.id, 0):,.2f}".replace(',', ' ')}} ₽</strong></td>
                   <td data-order="{{=project.projects.start_date.isoformat() if project.projects.start_date else ''}}">{{=project.projects.start_date.strftime('%d.%m.%Y') if project.projects.start_date else '-'}}</td>
                   <td data-order="{{=project.projects.end_date.isoformat() if project.projects.end_date else ''}}">{{=project.projects.end_date.strftime('%d.%m.%Y') if project.projects.end_date else '-'}}</td>
                   <td data-order="{{=project.projects.created_on.strftime('%Y-%m-%d %H:%M') if project.projects.created_on else ''}}">{{=project.projects.created_on.strftime('%d.%m.%Y %H:%M') if project.projects.created_on else '-'}}</td>
@@ -105,7 +105,7 @@
                 {{pass}}
               </tbody>
               <tfoot>
-                <tr class="table-info font-weight-bold"><td colspan="4" class="text-end">Общая сумма:</td><td id="dashboard-complect-sum-total">{{=f"{dashboard_complect_total:,.2f}".replace(',', ' ')}} ₽</td><td colspan="3"></td></tr>
+                <tr class="table-info font-weight-bold"><td colspan="4" class="text-end">Общая сумма:</td><td id="dashboard-specification-sum-total">{{=f"{dashboard_specification_total:,.2f}".replace(',', ' ')}} ₽</td><td colspan="3"></td></tr>
               </tfoot>
             </table>
           </div>
@@ -116,7 +116,7 @@
 </div>
 
 <style>
-.opacity-50{opacity:0.5}.shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,.075)!important}.card{transition:transform .2s}.card:hover{transform:translateY(-5px);box-shadow:0 .5rem 1rem rgba(0,0,0,.15)!important}.table thead th{vertical-align:middle;white-space:nowrap}.table tbody td{vertical-align:middle}.table tbody tr.project-row:hover{background-color:#f8f9fa!important}.table-responsive{max-height:600px;overflow-y:auto}.row.d-flex.flex-nowrap{scrollbar-width:thin}.customer-sidebar{position:fixed;top:0;right:-500px;width:500px;height:100vh;background:white;box-shadow:-2px 0 10px rgba(0,0,0,.1);transition:right .3s ease;z-index:1050;overflow-y:auto}.customer-sidebar.open{right:0}.customer-sidebar-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1040;display:none}.customer-sidebar-overlay.show{display:block}{{if show_customer_panel:}}.customer-sidebar-overlay{display:block}{{pass}}.customer-customer-sidebar-header{padding:20px;border-bottom:1px solid #dee2e6;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white}.customer-sidebar-body{padding:20px}
+.opacity-50{opacity:0.5}.shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,.075)!important}.card{transition:transform .2s}.card:hover{transform:translateY(-5px);box-shadow:0 .5rem 1rem rgba(0,0,0,.15)!important}.table thead th{vertical-align:middle;white-space:nowrap}.table tbody td{vertical-align:middle}.table tbody tr.project-row:hover{background-color:#f8f9fa!important}.row.d-flex.flex-nowrap{scrollbar-width:thin}.customer-sidebar{position:fixed;top:0;right:-500px;width:500px;height:100vh;background:white;box-shadow:-2px 0 10px rgba(0,0,0,.1);transition:right .3s ease;z-index:1050;overflow-y:auto}.customer-sidebar.open{right:0}.customer-sidebar-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1040;display:none}.customer-sidebar-overlay.show{display:block}{{if show_customer_panel:}}.customer-sidebar-overlay{display:block}{{pass}}.customer-customer-sidebar-header{padding:20px;border-bottom:1px solid #dee2e6;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white}.customer-sidebar-body{padding:20px}
 </style>
 <div class="customer-sidebar-overlay" id="customer-sidebarOverlay" onclick="closeCustomerSidebar()"></div>
 <div class="customer-sidebar {{='open' if show_customer_panel else ''}}" id="customerSidebar">
@@ -138,7 +138,7 @@ function openSidebar(){document.getElementById('customerSidebar').classList.add(
 function closeCustomerSidebar(){document.getElementById('customerSidebar').classList.remove('open');document.getElementById('customer-sidebarOverlay').classList.remove('show');document.body.style.overflow=''}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCustomerSidebar()});
 $(function(){
-  function updateDashboardSum(){var t=0;$('#projectsTable tbody tr.project-row:visible').each(function(){t+=parseFloat($(this).find('td').eq(4).attr('data-order'))||0});$('#dashboard-complect-sum-total').text(t.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' ₽')}
+  function updateDashboardSum(){var t=0;$('#projectsTable tbody tr.project-row:visible').each(function(){t+=parseFloat($(this).find('td').eq(4).attr('data-order'))||0});$('#dashboard-specification-sum-total').text(t.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' ₽')}
   $('#projectsTable').on('click','tbody tr.project-row',function(e){if($(e.target).closest('a').length)return;var h=$(this).data('href');if(h)window.location.href=h});
   $(document).on('click','.dashboard-status-card',function(){var n=$(this).data('status-name');if(n){$('#projectsTable tbody tr.project-row').each(function(){$(this).toggle($(this).data('status')===n)});updateDashboardSum();document.getElementById('dashboard-projects-table').scrollIntoView({behavior:'smooth',block:'start'})}});
   $('#btnResetFilter').on('click',function(){$('#projectsTable tbody tr.project-row').show();updateDashboardSum()});

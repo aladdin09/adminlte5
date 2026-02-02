@@ -53,10 +53,10 @@
               <td><a href="{{=URL('projects', 'view', args=[project.id])}}">{{=project.name}}</a></td>
             </tr>
             {{pass}}
-            {{if complect:}}
+            {{if specification:}}
             <tr>
-              <th>Комплект:</th>
-              <td><a href="{{=URL('complects', 'view_complect', args=[complect.id])}}">#{{=complect.id}}</a></td>
+              <th>Спецификация:</th>
+              <td><a href="{{=URL('specifications', 'view_specification', args=[specification.id])}}">#{{=specification.id}}</a></td>
             </tr>
             {{pass}}
             {{if order.description:}}

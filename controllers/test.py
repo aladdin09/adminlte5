@@ -538,6 +538,124 @@ def create_tables():
             pass
         return f"Ошибка создания таблиц: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
 
+def test_dashboard_sums():
+    """Тест вычисления сумм для дашборда"""
+    try:
+        result = "Тест вычисления сумм для дашборда:\n\n"
+        
+        # Проверяем наличие таблиц
+        result += "Проверка таблиц:\n"
+        for table_name in ['specifications', 'projects', 'specification_statuses']:
+            try:
+                db.rollback()
+                db(db[table_name].id > 0).select(limitby=(0, 1))
+                db.commit()
+                result += f"✓ {table_name}: существует\n"
+            except Exception as e:
+                result += f"✗ {table_name}: {str(e)[:100]}\n"
+                try:
+                    db.rollback()
+                except:
+                    pass
+        
+        # Проверяем данные в specifications
+        result += "\nПроверка данных в specifications:\n"
+        try:
+            db.rollback()
+            specification_status_ids_for_sum = [2, 3, 4, 5, 6]
+            rows = db((db.specifications.project_id != None) & (db.specifications.status_id.belongs(specification_status_ids_for_sum))).select(
+                db.specifications.project_id, db.specifications.status_id, db.specifications.total_amount, limitby=(0, 10)
+            )
+            db.commit()
+            result += f"✓ Найдено спецификаций с нужными статусами: {len(rows)}\n"
+            if rows:
+                result += "Первые записи:\n"
+                for row in rows[:5]:
+                    result += f"  - project_id={row.project_id}, status_id={row.status_id}, total_amount={row.total_amount}\n"
+        except Exception as e:
+            result += f"✗ Ошибка запроса specifications: {str(e)[:200]}\n"
+            try:
+                db.rollback()
+            except:
+                pass
+        
+        # Проверяем вычисление project_specification_sums
+        result += "\nВычисление project_specification_sums:\n"
+        try:
+            db.rollback()
+            specification_status_ids_for_sum = [2, 3, 4, 5, 6]
+            project_specification_sums = {}
+            rows = db((db.specifications.project_id != None) & (db.specifications.status_id.belongs(specification_status_ids_for_sum))).select(
+                db.specifications.project_id, db.specifications.total_amount
+            )
+            for row in rows:
+                pid = row.project_id
+                if pid:
+                    project_specification_sums[pid] = project_specification_sums.get(pid, 0) + float(row.total_amount or 0)
+            db.commit()
+            result += f"✓ Вычислено сумм для {len(project_specification_sums)} проектов\n"
+            if project_specification_sums:
+                result += "Примеры сумм:\n"
+                for pid, sum_val in list(project_specification_sums.items())[:5]:
+                    result += f"  - project_id={pid}: {sum_val:,.2f} ₽\n"
+        except Exception as e:
+            result += f"✗ Ошибка вычисления project_specification_sums: {str(e)[:200]}\n"
+            import traceback
+            result += f"\nTraceback:\n{traceback.format_exc()}\n"
+            try:
+                db.rollback()
+            except:
+                pass
+        
+        # Проверяем вычисление сумм по статусам
+        result += "\nВычисление сумм по статусам:\n"
+        try:
+            import project_statuses_service
+            all_statuses = project_statuses_service.get_all_statuses(db, is_active=True, order_by='sort_order')
+            result += f"✓ Найдено статусов: {len(all_statuses)}\n"
+            
+            db.rollback()
+            specification_status_ids_for_sum = [2, 3, 4, 5, 6]
+            project_specification_sums = {}
+            rows = db((db.specifications.project_id != None) & (db.specifications.status_id.belongs(specification_status_ids_for_sum))).select(
+                db.specifications.project_id, db.specifications.total_amount
+            )
+            for row in rows:
+                pid = row.project_id
+                if pid:
+                    project_specification_sums[pid] = project_specification_sums.get(pid, 0) + float(row.total_amount or 0)
+            
+            for status in all_statuses[:5]:  # Проверяем первые 5 статусов
+                try:
+                    db.rollback()
+                    project_ids = [r.id for r in db(db.projects.status_id == status.id).select(db.projects.id)]
+                    status_sum = sum(project_specification_sums.get(pid, 0) for pid in project_ids if pid)
+                    db.commit()
+                    result += f"  - {status.name} (id={status.id}): {len(project_ids)} проектов, сумма={status_sum:,.2f} ₽\n"
+                except Exception as e:
+                    result += f"  ✗ {status.name}: ошибка - {str(e)[:100]}\n"
+                    try:
+                        db.rollback()
+                    except:
+                        pass
+        except Exception as e:
+            result += f"✗ Ошибка вычисления сумм по статусам: {str(e)[:200]}\n"
+            import traceback
+            result += f"\nTraceback:\n{traceback.format_exc()}\n"
+            try:
+                db.rollback()
+            except:
+                pass
+        
+        return result
+    except Exception as e:
+        import traceback
+        try:
+            db.rollback()
+        except:
+            pass
+        return f"Ошибка: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+
 def test_simple_query():
     """Простой тест запроса к customers"""
     try:

@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def create_order(db, customer_id, order_number, order_date=None, project_id=None,
-                 complect_id=None, description=None, total_amount=0):
+                 specification_id=None, description=None, total_amount=0):
     """
     Создать новый заказ
     
@@ -17,7 +17,7 @@ def create_order(db, customer_id, order_number, order_date=None, project_id=None
         order_number: номер заказа
         order_date: дата заказа
         project_id: ID проекта
-        complect_id: ID комплекта (если заказ создан из комплекта)
+        specification_id: ID спецификации (если заказ создан из спецификации)
         description: описание заказа
         total_amount: общая сумма
     
@@ -34,7 +34,7 @@ def create_order(db, customer_id, order_number, order_date=None, project_id=None
             order_number=order_number,
             order_date=order_date,
             project_id=project_id,
-            complect_id=complect_id,
+            specification_id=specification_id,
             description=description,
             total_amount=total_amount
         )
@@ -45,38 +45,38 @@ def create_order(db, customer_id, order_number, order_date=None, project_id=None
         return {'success': False, 'error': str(e)}
 
 
-def create_order_from_complect(db, complect_id):
+def create_order_from_specification(db, specification_id):
     """
-    Создать заказ из комплекта: копировать данные комплекта в заказ, позиции комплекта в позиции заказа.
+    Создать заказ из спецификации: копировать данные спецификации в заказ, позиции спецификации в позиции заказа.
     
     Args:
         db: объект базы данных
-        complect_id: ID комплекта
+        specification_id: ID спецификации
     
     Returns:
         dict: результат операции {'success': bool, 'id': int, 'error': str}
     """
     try:
-        complect = db.complects(complect_id)
-        if not complect:
-            return {'success': False, 'error': 'Комплект не найден'}
+        specification = db.specifications(specification_id)
+        if not specification:
+            return {'success': False, 'error': 'Спецификация не найдена'}
         
         order_number = generate_order_number(db)
         from datetime import date
         order_date = date.today()
         
         order_id = db.orders.insert(
-            complect_id=complect_id,
-            project_id=complect.project_id,
-            customer_id=complect.customer_id,
+            specification_id=specification_id,
+            project_id=specification.project_id,
+            customer_id=specification.customer_id,
             order_number=order_number,
             order_date=order_date,
-            total_amount=complect.total_amount or 0,
-            description=complect.description or ''
+            total_amount=specification.total_amount or 0,
+            description=specification.description or ''
         )
         
-        complect_items = db(db.complect_items.complect_id == complect_id).select()
-        for item in complect_items:
+        specification_items = db(db.specification_items.specification_id == specification_id).select()
+        for item in specification_items:
             db.order_items.insert(
                 order_id=order_id,
                 item_name=item.item_name,
@@ -128,7 +128,7 @@ def get_order_by_number(db, order_number):
         return None
 
 
-def get_all_orders(db, customer_id=None, project_id=None, complect_id=None, order_by='created_on'):
+def get_all_orders(db, customer_id=None, project_id=None, specification_id=None, order_by='created_on'):
     """
     Получить все заказы
     

@@ -51,25 +51,28 @@ def get_customer_by_id(db, customer_id):
         return None
 
 
-def get_all_customers(db, order_by='name', limitby=None):
+def get_all_customers(db, order_by='name', limitby=None, customer_ids=None):
     """
-    Получить всех клиентов
-    
-    Args:
-        db: объект базы данных
-        order_by: поле для сортировки
-        limitby: ограничение количества (start, end)
-    
-    Returns:
-        Rows: список всех клиентов
+    Получить клиентов. Если задан customer_ids — только этих (для менеджера).
     """
     try:
         query = db.customers.id > 0
+        if customer_ids is not None and len(customer_ids) == 0:
+            return db(db.customers.id < 0).select()  # пустой результат (структура как у customers)
+        if customer_ids is not None:
+            query = db.customers.id.belongs(customer_ids)
         if limitby:
             return db(query).select(orderby=db.customers[order_by], limitby=limitby)
         return db(query).select(orderby=db.customers[order_by])
     except Exception as e:
         return db().select(db.customers.id)
+
+
+def get_customers_for_manager(db, user_id, order_by='name'):
+    """Клиенты, у которых есть хотя бы один проект с manager_id = user_id."""
+    import role_helpers
+    ids = role_helpers.get_manager_customer_ids(db, user_id)
+    return get_all_customers(db, order_by=order_by, customer_ids=ids if ids else [])
 
 
 def update_customer(db, customer_id, **kwargs):
@@ -125,35 +128,31 @@ def delete_customer(db, customer_id):
         return {'success': False, 'error': str(e)}
 
 
-def search_customers(db, search_term, order_by='name'):
+def search_customers(db, search_term, order_by='name', customer_ids=None):
     """
-    Поиск клиентов по имени, телефону, email или адресу
-    
-    Args:
-        db: объект базы данных
-        search_term: поисковый запрос
-        order_by: поле для сортировки
-    
-    Returns:
-        Rows: список найденных клиентов
+    Поиск клиентов. Если задан customer_ids — ищем только среди них (для менеджера).
     """
     try:
         query = (db.customers.name.contains(search_term)) | \
                 (db.customers.phone.contains(search_term)) | \
                 (db.customers.email.contains(search_term)) | \
                 (db.customers.address.contains(search_term))
+        if customer_ids is not None:
+            if not customer_ids:
+                return db().select(db.customers.id)
+            query = query & db.customers.id.belongs(customer_ids)
         return db(query).select(orderby=db.customers[order_by])
     except Exception as e:
         return db().select(db.customers.id)
 
 
-def get_customer_complects(db, customer_id):
+def get_customer_specifications(db, customer_id):
     """
-    Получить все комплекты клиента
+    Получить все спецификации клиента
     """
     try:
-        return db(db.complects.customer_id == customer_id).select(
-            orderby=~db.complects.created_on
+        return db(db.specifications.customer_id == customer_id).select(
+            orderby=~db.specifications.created_on
         )
     except Exception as e:
-        return db().select(db.complects.id)
+        return db().select(db.specifications.id)

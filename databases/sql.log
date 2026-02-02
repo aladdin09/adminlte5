@@ -5196,3 +5196,513 @@ CREATE TABLE "nomenclature_items"(
     "modified_on" TIMESTAMP
 );
 success!
+timestamp: 2026-02-01T16:38:02.756785
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:46:02.590241
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:46:02.603308
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T16:46:18.216564
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:46:18.219781
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T16:48:47.154408
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:48:47.157702
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T16:50:35.275278
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:50:35.278912
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T16:52:40.578235
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:52:40.587683
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T16:53:45.714831
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:53:45.717024
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T16:56:33.298294
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T16:56:33.315578
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T17:09:54.903176
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T17:09:54.906604
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T17:11:39.762571
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T17:11:39.766895
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T17:14:32.634626
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T17:14:32.716853
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T17:15:38.432270
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+timestamp: 2026-02-01T17:15:38.436636
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+timestamp: 2026-02-01T17:17:04.534074
+CREATE TABLE "auth_user"(
+    "id" SERIAL PRIMARY KEY,
+    "first_name" VARCHAR(128),
+    "last_name" VARCHAR(128),
+    "email" VARCHAR(512),
+    "password" VARCHAR(512),
+    "registration_key" VARCHAR(512),
+    "reset_password_key" VARCHAR(512),
+    "registration_id" VARCHAR(512)
+);
+success!
+timestamp: 2026-02-01T17:17:04.544203
+CREATE TABLE "auth_group"(
+    "id" SERIAL PRIMARY KEY,
+    "role" VARCHAR(512),
+    "description" TEXT
+);
+success!
+timestamp: 2026-02-01T17:17:04.549081
+CREATE TABLE "auth_membership"(
+    "id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "group_id" INTEGER REFERENCES "auth_group" ("id") ON DELETE CASCADE ON UPDATE CASCADE  
+);
+success!
+timestamp: 2026-02-01T17:17:04.552180
+CREATE TABLE "auth_permission"(
+    "id" SERIAL PRIMARY KEY,
+    "group_id" INTEGER REFERENCES "auth_group" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "name" VARCHAR(512),
+    "table_name" VARCHAR(512),
+    "record_id" INTEGER
+);
+success!
+timestamp: 2026-02-01T17:17:04.556266
+CREATE TABLE "auth_event"(
+    "id" SERIAL PRIMARY KEY,
+    "time_stamp" TIMESTAMP,
+    "client_ip" VARCHAR(512),
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "origin" VARCHAR(512),
+    "description" TEXT
+);
+success!
+timestamp: 2026-02-01T17:17:04.559314
+CREATE TABLE "auth_cas"(
+    "id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "created_on" TIMESTAMP,
+    "service" VARCHAR(512),
+    "ticket" VARCHAR(512),
+    "renew" CHAR(1)
+);
+success!
+timestamp: 2026-02-01T17:17:04.563304
+CREATE TABLE "complect_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+success!
+timestamp: 2026-02-01T17:17:04.568029
+CREATE TABLE "next_steps"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(200),
+    "description" TEXT,
+    "days" INTEGER,
+    "is_active" CHAR(1)
+);
+success!
+timestamp: 2026-02-01T17:17:04.572099
+CREATE TABLE "customers"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(200),
+    "phone" VARCHAR(50),
+    "email" VARCHAR(100),
+    "address" TEXT,
+    "notes" TEXT,
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-01T17:17:04.575565
+CREATE TABLE "project_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+success!
+timestamp: 2026-02-01T17:17:04.580984
+CREATE TABLE "projects"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(200),
+    "customer_id" INTEGER REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "complect_id" INTEGER,
+    "order_id" INTEGER,
+    "project_number" VARCHAR(50) UNIQUE,
+    "start_date" DATE,
+    "end_date" DATE,
+    "status_id" INTEGER REFERENCES "project_statuses" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "budget" NUMERIC(10,2),
+    "description" TEXT,
+    "notes" TEXT,
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP,
+    "created_at" TIMESTAMP,
+    "updated_at" TIMESTAMP,
+    "status_started_at" TIMESTAMP,
+    "sla_hours" INTEGER,
+    "manager_id" INTEGER REFERENCES "auth_user" ("id") ON DELETE CASCADE ON UPDATE CASCADE  
+);
+success!
+timestamp: 2026-02-01T17:17:04.585854
+CREATE TABLE "complects"(
+    "id" SERIAL PRIMARY KEY,
+    "customer_id" INTEGER REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "project_id" INTEGER REFERENCES "projects" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "status_id" INTEGER REFERENCES "complect_statuses" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "status_changed_on" TIMESTAMP,
+    "next_step_id" INTEGER REFERENCES "next_steps" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "execution_time" INTEGER,
+    "deadline" TIMESTAMP,
+    "description" TEXT,
+    "total_amount" NUMERIC(10,2),
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-01T17:17:04.591007
+CREATE TABLE "complect_items"(
+    "id" SERIAL PRIMARY KEY,
+    "complect_id" INTEGER REFERENCES "complects" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "nomenclature_item_id" INTEGER,
+    "item_name" VARCHAR(200),
+    "quantity" NUMERIC(10,2),
+    "unit" VARCHAR(50),
+    "price" NUMERIC(10,2),
+    "total" NUMERIC(10,2),
+    "description" TEXT,
+    "created_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-01T17:17:04.596358
+CREATE TABLE "orders"(
+    "id" SERIAL PRIMARY KEY,
+    "complect_id" INTEGER REFERENCES "complects" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "project_id" INTEGER REFERENCES "projects" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "customer_id" INTEGER REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "order_number" VARCHAR(50) UNIQUE,
+    "order_date" DATE,
+    "total_amount" NUMERIC(10,2),
+    "description" TEXT,
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-01T17:17:04.599561
+CREATE TABLE "order_items"(
+    "id" SERIAL PRIMARY KEY,
+    "order_id" INTEGER REFERENCES "orders" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "item_name" VARCHAR(200),
+    "quantity" NUMERIC(10,2),
+    "unit" VARCHAR(50),
+    "price" NUMERIC(10,2),
+    "total" NUMERIC(10,2),
+    "description" TEXT,
+    "created_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-01T17:17:04.603467
+CREATE TABLE "nomenclature_items"(
+    "id" SERIAL PRIMARY KEY,
+    "item_number" VARCHAR(50) UNIQUE,
+    "item_date" DATE,
+    "unit" VARCHAR(50),
+    "total_cost" NUMERIC(10,2),
+    "description" TEXT,
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-02T10:38:20.994245
+ALTER TABLE "customers" ADD "middle_name" VARCHAR(200);
+timestamp: 2026-02-02T10:38:21.004283
+ALTER TABLE "customers" ADD "last_name" VARCHAR(200);
+timestamp: 2026-02-02T10:38:21.004992
+ALTER TABLE "customers" ADD "full_name" VARCHAR(600);
+success!
+timestamp: 2026-02-02T10:49:39.133475
+ALTER TABLE "customers" ADD "comments" TEXT;
+success!
+timestamp: 2026-02-02T13:18:45.123009
+CREATE TABLE "lead_sources"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(200),
+    "is_active" CHAR(1),
+    "sort_order" INTEGER
+);
+success!
+timestamp: 2026-02-02T13:18:45.195584
+ALTER TABLE "customers" ADD "lead_source_id" INTEGER REFERENCES "lead_sources" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+timestamp: 2026-02-02T13:18:45.208026
+ALTER TABLE "customers" ADD "link" VARCHAR(500);
+success!
+timestamp: 2026-02-02T14:02:10.771100
+CREATE TABLE "branches"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(200),
+    "address" TEXT,
+    "phone" VARCHAR(50),
+    "email" VARCHAR(100),
+    "description" TEXT,
+    "is_active" CHAR(1),
+    "sort_order" INTEGER
+);
+success!
+timestamp: 2026-02-02T14:02:10.807977
+ALTER TABLE "auth_user" ADD "branch_id" INTEGER REFERENCES "branches" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+success!
+timestamp: 2026-02-02T20:37:07.224988
+CREATE TABLE "specification_statuses"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+success!
+timestamp: 2026-02-02T20:37:07.265417
+ALTER TABLE "projects" ADD "specification_id" INTEGER;
+timestamp: 2026-02-02T20:37:07.276538
+ALTER TABLE "projects" DROP COLUMN "complect_id";
+success!
+timestamp: 2026-02-02T20:37:07.289101
+CREATE TABLE "specifications"(
+    "id" SERIAL PRIMARY KEY,
+    "customer_id" INTEGER REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "project_id" INTEGER REFERENCES "projects" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "status_id" INTEGER REFERENCES "specification_statuses" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "status_changed_on" TIMESTAMP,
+    "next_step_id" INTEGER REFERENCES "next_steps" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "execution_time" INTEGER,
+    "deadline" TIMESTAMP,
+    "description" TEXT,
+    "total_amount" NUMERIC(10,2),
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-02T20:37:07.322062
+CREATE TABLE "specification_items"(
+    "id" SERIAL PRIMARY KEY,
+    "specification_id" INTEGER REFERENCES "specifications" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "nomenclature_item_id" INTEGER,
+    "item_name" VARCHAR(200),
+    "quantity" NUMERIC(10,2),
+    "unit" VARCHAR(50),
+    "price" NUMERIC(10,2),
+    "total" NUMERIC(10,2),
+    "description" TEXT,
+    "created_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-02T20:37:07.348286
+ALTER TABLE "orders" ADD "specification_id" INTEGER REFERENCES "specifications" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+timestamp: 2026-02-02T20:37:07.356528
+ALTER TABLE "orders" DROP COLUMN "complect_id";
+success!
+success!
+success!
+timestamp: 2026-02-02T22:41:22.129801
+CREATE TABLE "user_roles"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100),
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+success!
+timestamp: 2026-02-02T23:33:50.493538
+ALTER TABLE "auth_user" ADD "role_id" INTEGER REFERENCES "user_roles" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+success!
+timestamp: 2026-02-02T23:40:34.557489
+ALTER TABLE "auth_user" ADD "nic" VARCHAR(128) UNIQUE;
+success!

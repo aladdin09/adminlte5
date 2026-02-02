@@ -42,9 +42,12 @@ def get_status_by_id(db, status_id):
     
     Returns:
         Row или None: запись статуса или None если не найдена
+    
+    Note: Не делает rollback/commit - это должно делаться вызывающим кодом
     """
     try:
-        return db.project_statuses(status_id) or None
+        result = db.project_statuses(status_id) or None
+        return result
     except Exception as e:
         return None
 
@@ -55,6 +58,8 @@ def get_status_by_name(db, name):
     
     Returns:
         Row или None
+    
+    Note: Не делает rollback/commit - это должно делаться вызывающим кодом
     """
     try:
         n = (name or '').strip()
@@ -77,14 +82,19 @@ def get_all_statuses(db, is_active=None, order_by='sort_order'):
     
     Returns:
         Rows: список всех статусов
+    
+    Note: Не делает rollback/commit - это должно делаться вызывающим кодом
     """
     try:
         query = db.project_statuses.id > 0
         if is_active is not None:
             query = query & (db.project_statuses.is_active == is_active)
-        return db(query).select(orderby=db.project_statuses[order_by])
+        result = db(query).select(orderby=db.project_statuses[order_by])
+        return result
     except Exception as e:
-        return db().select(db.project_statuses.id)
+        # При ошибке возвращаем пустой результат
+        # Не делаем rollback здесь - это должно делаться вызывающим кодом
+        raise  # Пробрасываем ошибку дальше, чтобы safe_db_query мог обработать
 
 
 def update_status(db, status_id, **kwargs):

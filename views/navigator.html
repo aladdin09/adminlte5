@@ -64,7 +64,7 @@ body.has-navigator { padding-top: 132px; }
           <a class="nav-link" href="{{=URL('orders','view')}}"><i class="fa fa-shopping-cart"></i> Заказы</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{=URL('complects','view_complect')}}"><i class="fa fa-cubes"></i> Комплекты</a>
+          <a class="nav-link" href="{{=URL('specifications','view_specification')}}"><i class="fa fa-cubes"></i> Спецификации</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="javascript:void(0)" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-dashboard"></i> Дашборды</a>
@@ -82,7 +82,10 @@ body.has-navigator { padding-top: 132px; }
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="{{=URL('project_statuses','list')}}">Статусы проектов</a></li>
             <li><a class="dropdown-item" href="{{=URL('request_statuses','list')}}">Статусы заявок</a></li>
-            <li><a class="dropdown-item" href="{{=URL('complect_statuses','list')}}">Статусы комплектов</a></li>
+            <li><a class="dropdown-item" href="{{=URL('specification_statuses','list')}}">Статусы спецификаций</a></li>
+            <li><a class="dropdown-item" href="{{=URL('user_roles','list')}}">Роли</a></li>
+            <li><a class="dropdown-item" href="{{=URL('branches','list')}}">Филиалы</a></li>
+            <li><a class="dropdown-item" href="{{=URL('users','list')}}">Пользователи</a></li>
             <li><a class="dropdown-item" href="{{=URL('statuses','list')}}">Статусы</a></li>
           </ul>
         </li>
@@ -92,7 +95,7 @@ body.has-navigator { padding-top: 132px; }
             <li><a class="dropdown-item" href="{{=URL('nomenclature_items','list')}}">Номенклатура</a></li>
             <li><a class="dropdown-item" href="{{=URL('project_statuses','list')}}">Статусы проектов</a></li>
             <li><a class="dropdown-item" href="{{=URL('request_statuses','list')}}">Статусы заявок</a></li>
-            <li><a class="dropdown-item" href="{{=URL('complect_statuses','list')}}">Статусы комплектов</a></li>
+            <li><a class="dropdown-item" href="{{=URL('specification_statuses','list')}}">Статусы спецификаций</a></li>
           </ul>
         </li>
       </ul>

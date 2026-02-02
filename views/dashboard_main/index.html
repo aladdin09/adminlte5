@@ -42,7 +42,7 @@
                 <th>Название</th>
                 <th>Клиент</th>
                 <th>Статус</th>
-                <th title="Сумма комплектов">Общая сумма комплекта</th>
+                <th title="Сумма спецификаций">Общая сумма спецификации</th>
                 <th>Дата начала</th>
                 <th>Дата окончания</th>
                 <th>Дата создания</th>
@@ -66,9 +66,9 @@
                     <span class="badge bg-{{=status_color}}">{{=project.project_statuses.name}}</span>
                   {{else:}}<span class="badge bg-secondary">-</span>{{pass}}
                 </td>
-                <td data-order="{{=float(project_complect_sums.get(project.projects.id, 0))}}">
-                  {{complect_sum = project_complect_sums.get(project.projects.id, 0)}}
-                  <strong>{{=f"{complect_sum:,.2f}".replace(',', ' ')}} ₽</strong>
+                <td data-order="{{=float(project_specification_sums.get(project.projects.id, 0))}}">
+                  {{specification_sum = project_specification_sums.get(project.projects.id, 0)}}
+                  <strong>{{=f"{specification_sum:,.2f}".replace(',', ' ')}} ₽</strong>
                 </td>
                 <td data-order="{{=project.projects.start_date.isoformat() if project.projects.start_date else ''}}">{{=project.projects.start_date.strftime('%d.%m.%Y') if project.projects.start_date else '-'}}</td>
                 <td data-order="{{=project.projects.end_date.isoformat() if project.projects.end_date else ''}}">{{=project.projects.end_date.strftime('%d.%m.%Y') if project.projects.end_date else '-'}}</td>
@@ -82,7 +82,7 @@
             <tfoot class="table-light">
               <tr>
                 <td colspan="4" class="text-end fw-bold">Общая сумма:</td>
-                <td id="dashboard-complect-sum-total" class="fw-bold">{{=f"{dashboard_complect_total:,.2f}".replace(',', ' ')}} ₽</td>
+                <td id="dashboard-specification-sum-total" class="fw-bold">{{=f"{dashboard_specification_total:,.2f}".replace(',', ' ')}} ₽</td>
                 <td colspan="3"></td>
               </tr>
             </tfoot>
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var tds = tr.querySelectorAll('td');
       if (tds[4]) total += parseFloat(tds[4].getAttribute('data-order')) || 0;
     });
-    var el = document.getElementById('dashboard-complect-sum-total');
+    var el = document.getElementById('dashboard-specification-sum-total');
     if (el) el.textContent = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽';
   }
   var tableBody = document.querySelector('#projectsTable tbody');

@@ -13,12 +13,14 @@
       <div class="card-body">
         <div class="dashboard-status-cards-vertical">
           {{for stat in dashboard_stats:}}
-          {{gcolor = 'secondary' if stat['color'] == 'secondary' else stat['color']}}
-          {{stat_sum = stat.get('sum', 0)}}
-          <div class="list-item dashboard-status-card border-start border-3 border-{{=gcolor}} rounded mb-2 p-2 bg-white shadow-sm" style="cursor: pointer;" data-status-name="{{=stat['name']}}" title="Показать проекты со статусом «{{=stat['name']}}»">
+          {{gcolor = 'secondary' if stat.get('color') == 'secondary' else (stat.get('color') or 'secondary')}}
+          {{stat_sum = float(stat.get('sum') or 0)}}
+          {{stat_name = stat.get('name','')}}
+          {{show_sum = stat_name not in ('Начальный', 'Комплектация')}}
+          <div class="list-item dashboard-status-card border-start border-3 border-{{=gcolor}} rounded mb-2 p-2 bg-white shadow-sm" style="cursor: pointer;" data-status-name="{{=stat_name}}" title="Показать проекты со статусом «{{=stat_name}}»">
             <div class="d-flex justify-content-between align-items-center">
-              <span class="fw-bold">{{=stat['name']}} <span class="badge bg-{{=gcolor}} ms-1">{{=stat.get('count', 0)}}</span></span>
-              <span class="badge bg-{{=gcolor}}">{{=f"{stat_sum:,.2f}".replace(',', ' ')}} ₽</span>
+              <span class="fw-bold">{{=stat_name}} <span class="badge bg-{{=gcolor}} ms-1">{{=stat.get('count', 0)}}</span></span>
+              <span class="badge bg-{{=gcolor}}">{{=f"{stat_sum/1000:,.0f}".replace(',', ' ') + ' K' if show_sum else '—'}}</span>
             </div>
           </div>
           {{pass}}
@@ -42,7 +44,7 @@
                 <th>Название</th>
                 <th>Клиент</th>
                 <th>Статус</th>
-                <th title="Сумма комплектов">Общая сумма комплекта</th>
+                <th title="Сумма спецификаций">Общая сумма спецификации</th>
                 <th>Дата начала</th>
                 <th>Дата окончания</th>
                 <th>Дата создания</th>
@@ -68,9 +70,9 @@
                     <span class="badge bg-{{=status_color}}">{{=project.project_statuses.name}}</span>
                   {{else:}}<span class="badge bg-secondary">-</span>{{pass}}
                 </td>
-                <td data-order="{{=float(project_complect_sums.get(project.projects.id, 0))}}">
-                  {{complect_sum = project_complect_sums.get(project.projects.id, 0)}}
-                  <strong>{{=f"{complect_sum:,.2f}".replace(',', ' ')}} ₽</strong>
+                <td data-order="{{=float(project_specification_sums.get(int(project.projects.id), 0) or 0)}}">
+                  {{specification_sum = float(project_specification_sums.get(int(project.projects.id), 0) or 0)}}
+                  <strong>{{=f"{specification_sum/1000:,.0f}".replace(',', ' ')}} K</strong>
                 </td>
                 <td data-order="{{=project.projects.start_date.isoformat() if project.projects.start_date else ''}}">{{=project.projects.start_date.strftime('%d.%m.%Y') if project.projects.start_date else '-'}}</td>
                 <td data-order="{{=project.projects.end_date.isoformat() if project.projects.end_date else ''}}">{{=project.projects.end_date.strftime('%d.%m.%Y') if project.projects.end_date else '-'}}</td>
@@ -84,7 +86,7 @@
             <tfoot class="table-light">
               <tr>
                 <td colspan="4" class="text-end fw-bold">Общая сумма:</td>
-                <td id="dashboard-complect-sum-total" class="fw-bold">{{=f"{dashboard_complect_total:,.2f}".replace(',', ' ')}} ₽</td>
+                <td id="dashboard-specification-sum-total" class="fw-bold">{{=f"{float(dashboard_specification_total or 0)/1000:,.0f}".replace(',', ' ')}} K</td>
                 <td colspan="3"></td>
               </tr>
             </tfoot>
@@ -155,8 +157,9 @@ document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close
       var tds = tr.querySelectorAll('td');
       if (tds[4]) total += parseFloat(tds[4].getAttribute('data-order')) || 0;
     });
-    var el = document.getElementById('dashboard-complect-sum-total');
-    if (el) el.textContent = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽';
+    var totalK = total / 1000;
+    var el = document.getElementById('dashboard-specification-sum-total');
+    if (el) el.textContent = totalK.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' K';
   }
   var tableBody = document.querySelector('#projectsTable tbody');
   if (tableBody) {

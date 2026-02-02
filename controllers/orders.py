@@ -22,10 +22,10 @@ def view():
         if order.project_id:
             import projects_service
             project = projects_service.get_project_by_id(db, order.project_id)
-        complect = None
-        if order.complect_id:
-            import complects_service
-            complect = complects_service.get_complect_by_id(db, order.complect_id)
+        specification = None
+        if order.specification_id:
+            import specifications_service
+            specification = specifications_service.get_specification_by_id(db, order.specification_id)
         order_items = orders_service.get_order_items(db, order_id)
         # Хлебные крошки: Главная → Клиенты → Клиент [→ Проект] → Заказ
         import breadcrumbs_helper
@@ -48,7 +48,7 @@ def view():
             order=order,
             customer=customer,
             project=project,
-            complect=complect,
+            specification=specification,
             order_items=order_items,
             breadcrumbs=breadcrumbs,
         )

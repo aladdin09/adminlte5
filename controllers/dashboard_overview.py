@@ -21,7 +21,7 @@ def index():
         show_customer_panel = True
     if request.vars.get('open_customer_panel') == '1':
         show_customer_panel = True
-    data = get_dashboard_data(db, request)
+    data = get_dashboard_data(db, request, auth)
     form_customer.element('input[type=submit]')['_class'] = 'btn btn-primary btn-block'
     data['form_customer'] = form_customer
     data['show_customer_panel'] = show_customer_panel
