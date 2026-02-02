@@ -227,6 +227,66 @@ def wiki():
     auth.wikimenu() # add the wiki to the menu
     return auth.wiki() 
 
+# ---- Первоначальная настройка (когда в системе ещё нет пользователей) -----
+def first_run():
+    """
+    Страница создания первого пользователя. Доступна только когда в auth_user нет записей.
+    Создаёт роли по умолчанию (если пусто) и форму для первого пользователя.
+    """
+    try:
+        user_count = db(db.auth_user.id > 0).count()
+    except Exception:
+        user_count = 1  # при ошибке не показывать форму
+    if user_count > 0:
+        session.flash = 'В системе уже есть пользователи. Войдите в систему.'
+        redirect(URL('default', 'user', args=['login']))
+    # Создать роли по умолчанию, если таблица ролей пуста
+    try:
+        if db(db.user_roles.id > 0).count() == 0:
+            for i, name in enumerate(['Admin', 'Собственник', 'Менеджер', 'РОП'], 1):
+                db.user_roles.insert(name=name, sort_order=i, is_active=True)
+            db.commit()
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+    form = SQLFORM.factory(
+        Field('nic', 'string', length=128, requires=[IS_NOT_EMPTY(), IS_MATCH(r'^\w+$', error_message='Только буквы, цифры и _')], label='Логин'),
+        Field('email', 'string', length=128, requires=[IS_NOT_EMPTY(), IS_EMAIL()], label='Email'),
+        Field('password', 'password', requires=IS_NOT_EMPTY(), label='Пароль'),
+        Field('first_name', 'string', length=128, label='Имя'),
+        Field('last_name', 'string', length=128, label='Фамилия'),
+        Field('role_id', 'reference user_roles', requires=IS_IN_DB(db, db.user_roles.id, '%(name)s'), label='Роль'),
+        submit_button='Создать первого пользователя',
+        _id='first_run_form',
+        _name='first_run_form',
+    )
+    if form.process(formname='first_run_form').accepted:
+        try:
+            pw = form.vars.password
+            user_id = db.auth_user.insert(
+                nic=form.vars.nic,
+                email=form.vars.email,
+                password=auth.table_user().password.validate(pw, form.vars)[0],
+                first_name=form.vars.first_name or '',
+                last_name=form.vars.last_name or '',
+                role_id=form.vars.role_id,
+            )
+            db.commit()
+            session.flash = 'Первый пользователь создан. Войдите в систему.'
+            redirect(URL('default', 'user', args=['login']))
+        except Exception as e:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            response.flash = 'Ошибка при создании пользователя: %s' % str(e)
+    if form.errors:
+        response.flash = 'Исправьте ошибки в форме'
+    return dict(form=form)
+
+
 # ---- Action for login/register/etc (required for auth) -----
 def user():
     """
@@ -244,6 +304,13 @@ def user():
     to decorate functions that need access control
     also notice there is http://..../[app]/appadmin/manage/auth to allow administrator to manage users
     """
+    # Если пользователей ещё нет — перенаправить на первоначальную настройку
+    if request.args(0) == 'login':
+        try:
+            if db(db.auth_user.id > 0).count() == 0:
+                redirect(URL('default', 'first_run'))
+        except Exception:
+            pass
     # Чтобы на странице входа показывались ошибки (неверный пароль и т.д.)
     if request.args(0) == 'login' and session.flash:
         response.flash = session.flash
