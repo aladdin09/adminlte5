@@ -1,0 +1,182 @@
+{{extend 'layout_gentelella_bs5.html'}}
+
+{{block header}}
+{{if breadcrumbs:}}
+<nav aria-label="breadcrumb" class="mb-2">
+  <ol class="breadcrumb mb-0">
+    {{for crumb in breadcrumbs:}}
+    {{if crumb['url']:}}
+    <li class="breadcrumb-item"><a href="{{=crumb['url']}}">{{=crumb['label']}}</a></li>
+    {{else:}}
+    <li class="breadcrumb-item active" aria-current="page">{{=crumb['label']}}</li>
+    {{pass}}
+    {{pass}}
+  </ol>
+</nav>
+{{pass}}
+{{end}}
+
+<div class="container-fluid mt-2">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <button type="button" class="btn btn-primary" onclick="openCreateSidebar()">
+                <i class="bi bi-plus"></i> Добавить часть дома
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0"><i class="bi bi-house-door"></i> Список частей дома</h5>
+                </div>
+                <div class="card-body">
+                    {{if parts_list:}}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Название</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{for part in parts_list:}}
+                                <tr>
+                                    <td>{{=part.id}}</td>
+                                    <td><strong>{{=part.name}}</strong></td>
+                                    <td>
+                                        <a href="{{=URL('parts', 'list', vars=dict(edit=part.id))}}" class="btn btn-sm btn-primary me-2" title="Редактировать">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{=URL('parts', 'delete', args=[part.id])}}" class="btn btn-sm btn-danger" title="Удалить"
+                                           onclick="return confirm('Удалить эту часть дома?');">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {{pass}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else:}}
+                    <div class="alert alert-info">
+                        <p class="mb-0"><i class="bi bi-info-circle"></i> Части дома не добавлены. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" onclick="openCreateSidebar()">Добавьте первую</button></p>
+                    </div>
+                    {{pass}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th { background-color: #f8f9fa; font-weight: 600; }
+.parts-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 1040; display: none; }
+.parts-overlay.show { display: block; }
+.parts-sidebar { position: fixed; top: 0; right: -420px; width: 420px; max-width: 100vw; height: 100vh; background: var(--bs-body-bg); box-shadow: -2px 0 12px rgba(0,0,0,.15); transition: right 0.3s ease; z-index: 1050; overflow-y: auto; display: flex; flex-direction: column; }
+.parts-sidebar.open { right: 0; }
+.parts-sidebar .sidebar-header { padding: 1rem; border-bottom: 1px solid var(--bs-border-color); background: var(--bs-primary); color: #fff; }
+.parts-sidebar .sidebar-body { padding: 1rem; flex: 1; overflow-y: auto; }
+</style>
+
+<div class="parts-overlay" id="partsOverlay" onclick="closeAllPartsSidebars()"></div>
+
+{{if form_create:}}
+<div class="parts-sidebar" id="partsCreateSidebar">
+  <div class="sidebar-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 text-white"><i class="bi bi-plus-circle me-2"></i> Добавление части дома</h5>
+    <button type="button" class="btn btn-light btn-sm" onclick="closeCreateSidebar()"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sidebar-body">
+    {{=form_create.custom.begin}}
+    {{if form_create.errors:}}
+    <div class="alert alert-danger">
+      <strong>Ошибки:</strong>
+      <ul class="mb-0">{{for field, error in form_create.errors.items():}}<li>{{=field}}: {{=error}}</li>{{pass}}</ul>
+    </div>
+    {{pass}}
+    <div class="mb-3"><label for="parts_name" class="form-label">Название <span class="text-danger">*</span></label>{{=form_create.custom.widget.name}}</div>
+    <div class="mb-3">{{=form_create.custom.submit}}<button type="button" class="btn btn-secondary w-100 mt-2" onclick="closeCreateSidebar()">Отмена</button></div>
+    {{=form_create.custom.end}}
+  </div>
+</div>
+{{pass}}
+
+{{if form_edit:}}
+<div class="parts-sidebar" id="partsEditSidebar">
+  <div class="sidebar-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 text-white"><i class="bi bi-pencil me-2"></i> Редактирование части дома</h5>
+    <a href="{{=URL('parts', 'list')}}" class="btn btn-light btn-sm"><i class="bi bi-x-lg"></i></a>
+  </div>
+  <div class="sidebar-body">
+    {{=form_edit.custom.begin}}
+    {{if form_edit.errors:}}
+    <div class="alert alert-danger">
+      <strong>Ошибки:</strong>
+      <ul class="mb-0">{{for field, error in form_edit.errors.items():}}<li>{{=field}}: {{=error}}</li>{{pass}}</ul>
+    </div>
+    {{pass}}
+    <div class="mb-3"><label class="form-label">Название <span class="text-danger">*</span></label>{{=form_edit.custom.widget.name}}</div>
+    <div class="mb-3">{{=form_edit.custom.submit}}<a href="{{=URL('parts', 'list')}}" class="btn btn-secondary w-100 mt-2">Отмена</a></div>
+    {{=form_edit.custom.end}}
+  </div>
+</div>
+{{pass}}
+
+{{if form_create or form_edit:}}
+<script>
+function openCreateSidebar() {
+  var overlay = document.getElementById('partsOverlay');
+  var sidebar = document.getElementById('partsCreateSidebar');
+  var editSidebar = document.getElementById('partsEditSidebar');
+  if (editSidebar) editSidebar.classList.remove('open');
+  if (overlay) overlay.classList.add('show');
+  if (sidebar) sidebar.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCreateSidebar() {
+  var overlay = document.getElementById('partsOverlay');
+  var sidebar = document.getElementById('partsCreateSidebar');
+  if (overlay) overlay.classList.remove('show');
+  if (sidebar) sidebar.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeEditSidebar() {
+  var overlay = document.getElementById('partsOverlay');
+  var el = document.getElementById('partsEditSidebar');
+  if (el) el.classList.remove('open');
+  if (overlay) overlay.classList.remove('show');
+  document.body.style.overflow = '';
+}
+function closeAllPartsSidebars() {
+  closeCreateSidebar();
+  closeEditSidebar();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeAllPartsSidebars();
+});
+{{if show_edit_panel:}}
+(function openEditPanelOnLoad() {
+  function openPanel() {
+    var overlay = document.getElementById('partsOverlay');
+    var panel = document.getElementById('partsEditSidebar');
+    var createPanel = document.getElementById('partsCreateSidebar');
+    if (createPanel) createPanel.classList.remove('open');
+    if (panel && overlay) {
+      panel.classList.add('open');
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', openPanel);
+  } else {
+    openPanel();
+  }
+})();
+{{pass}}
+</script>
+{{pass}}

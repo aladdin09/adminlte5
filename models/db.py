@@ -502,20 +502,6 @@ db.define_table('specifications',
     format='%(id)s - %(customer_id)s'
 )
 
-# Таблица: Позиции спецификации (nomenclature_item_id задаётся после определения nomenclature_items)
-db.define_table('specification_items',
-    Field('specification_id', 'reference specifications', required=True, label='Спецификация'),
-    Field('nomenclature_item_id', 'integer', label='Позиция номенклатуры'),
-    Field('item_name', 'string', length=200, required=True, label='Название позиции'),
-    Field('quantity', 'decimal(10,2)', default=1, label='Количество'),
-    Field('unit', 'string', length=50, default='шт', label='Единица измерения'),
-    Field('price', 'decimal(10,2)', default=0, label='Цена за единицу'),
-    Field('total', 'decimal(10,2)', default=0, label='Итого'),
-    Field('description', 'text', label='Описание'),
-    Field('created_on', 'datetime', default=request.now, writable=False, readable=True),
-    format='%(item_name)s'
-)
-
 # Таблица: Заказы
 db.define_table('orders',
     Field('specification_id', 'reference specifications', label='Спецификация'),
@@ -543,9 +529,50 @@ db.define_table('order_items',
     format='%(item_name)s'
 )
 
+# Таблица: Типы позиций номенклатуры
+db.define_table('nomenclature_item_types',
+    Field('name', 'string', length=100, required=True, unique=True, label='Название типа'),
+    Field('description', 'text', label='Описание типа'),
+    Field('sort_order', 'integer', default=0, label='Порядок сортировки'),
+    Field('is_active', 'boolean', default=True, label='Активен'),
+    format='%(name)s'
+)
+
+# Таблица: Части дома (parts)
+db.define_table('parts',
+    Field('name', 'string', length=200, required=True, label='Название'),
+    format='%(name)s'
+)
+
+# Таблица: Шаблоны обязательных позиций
+db.define_table('required_item_templates',
+    Field('part_id', 'reference parts', required=True, label='Часть дома'),
+    Field('name', 'string', length=200, required=True, label='Название'),
+    Field('required_qty', 'decimal(10,2)', default=1, label='Обязательное количество'),
+    Field('unit', 'string', length=50, default='шт', label='Единица измерения'),
+    format='%(name)s'
+)
+
+# Таблица: Позиции спецификации
+db.define_table('specification_items',
+    Field('specification_id', 'reference specifications', required=True, label='Спецификация'),
+    Field('part_id', 'reference parts', label='Часть дома'),
+    Field('template_id', 'reference required_item_templates', label='Шаблон обязательной позиции'),
+    Field('nomenclature_item_id', 'integer', label='Позиция номенклатуры'),
+    Field('item_name', 'string', length=200, required=True, label='Название позиции'),
+    Field('quantity', 'decimal(10,2)', default=1, label='Количество'),
+    Field('unit', 'string', length=50, default='шт', label='Единица измерения'),
+    Field('price', 'decimal(10,2)', default=0, label='Цена за единицу'),
+    Field('total', 'decimal(10,2)', default=0, label='Итого'),
+    Field('description', 'text', label='Описание'),
+    Field('created_on', 'datetime', default=request.now, writable=False, readable=True),
+    format='%(item_name)s'
+)
+
 # Таблица: Позиции номенклатуры
 db.define_table('nomenclature_items',
     Field('item_number', 'string', length=50, unique=True, required=True, label='Номер позиции номенклатуры'),
+    Field('item_type_id', 'reference nomenclature_item_types', label='Тип позиции'),
     Field('item_date', 'date', default=request.now.date(), label='Дата позиции'),
     Field('unit', 'string', length=50, default='шт', label='Единица измерения'),
     Field('total_cost', 'decimal(10,2)', default=0, label='Общая стоимость'),
@@ -555,8 +582,34 @@ db.define_table('nomenclature_items',
     format='%(item_number)s'
 )
 
+# Таблица: Допустимые материалы для обязательной позиции
+db.define_table('required_item_materials',
+    Field('required_item_template_id', 'reference required_item_templates', required=True, label='Шаблон обязательной позиции'),
+    Field('nomenclature_id', 'reference nomenclature_items', required=True, label='Позиция номенклатуры'),
+    format='%(id)s'
+)
+
+# Таблица: Обязательные позиции в конкретной спецификации
+db.define_table('specification_required_items',
+    Field('spec_id', 'reference specifications', required=True, label='Спецификация'),
+    Field('part_id', 'reference parts', required=True, label='Часть дома'),
+    Field('template_id', 'reference required_item_templates', required=True, label='Шаблон обязательной позиции'),
+    Field('required_qty', 'decimal(10,2)', default=0, label='Требуемое количество'),
+    Field('added_qty', 'decimal(10,2)', default=0, label='Добавленное количество'),
+    format='%(id)s'
+)
+
 # Ссылка позиции спецификации на номенклатуру (поле остаётся integer, валидатор проверяет наличие в nomenclature_items)
 db.specification_items.nomenclature_item_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.nomenclature_items.id, '%(item_number)s'))
+db.specification_items.part_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.parts.id, '%(name)s'))
+db.specification_items.template_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.required_item_templates.id, '%(name)s'))
+db.nomenclature_items.item_type_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.nomenclature_item_types.id, '%(name)s'))
+db.required_item_templates.part_id.requires = IS_IN_DB(db, db.parts.id, '%(name)s')
+db.required_item_materials.required_item_template_id.requires = IS_IN_DB(db, db.required_item_templates.id, '%(name)s')
+db.required_item_materials.nomenclature_id.requires = IS_IN_DB(db, db.nomenclature_items.id, '%(item_number)s')
+db.specification_required_items.spec_id.requires = IS_IN_DB(db, db.specifications.id, '%(id)s')
+db.specification_required_items.part_id.requires = IS_IN_DB(db, db.parts.id, '%(name)s')
+db.specification_required_items.template_id.requires = IS_IN_DB(db, db.required_item_templates.id, '%(name)s')
 
 # -------------------------------------------------------------------------
 # Индексы для оптимизации запросов

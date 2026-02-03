@@ -11,13 +11,18 @@ def list():
     import nomenclature_items_service
     
     search_term = request.vars.get('search', '')
-    # Панель редактирования: при ?edit=id показываем форму в панели
-    form_edit = None
-    edit_item = None
-    show_edit_panel = False
     edit_id = request.vars.get('edit')
+    edit_item = None
+    form_edit = None
+    show_edit_panel = False
+    
+    # Панель редактирования: при ?edit=id показываем форму редактирования в панели
     if edit_id:
-        edit_item = nomenclature_items_service.get_nomenclature_item_by_id(db, edit_id)
+        try:
+            edit_id = int(edit_id)
+            edit_item = db.nomenclature_items(edit_id)
+        except (TypeError, ValueError):
+            edit_item = None
         if edit_item:
             form_edit = SQLFORM(
                 db.nomenclature_items,
@@ -35,10 +40,59 @@ def list():
             if form_edit.element('input[type=submit]'):
                 form_edit.element('input[type=submit]')['_class'] = 'btn btn-primary btn-block'
             show_edit_panel = True
-    if search_term:
-        items = nomenclature_items_service.search_nomenclature_items(db, search_term)
-    else:
-        items = nomenclature_items_service.get_all_nomenclature_items(db, order_by='created_on')
+    
+    # Форма для добавления позиции номенклатуры (для sidebar)
+    form_create = SQLFORM(
+        db.nomenclature_items,
+        submit_button='Создать',
+        _id='nomenclatureItemCreateForm',
+        _name='nomenclature_item_create_form',
+        _action=URL('nomenclature_items', 'list'),
+        _method='POST'
+    )
+    
+    # Генерируем номер по умолчанию для формы создания
+    default_number = nomenclature_items_service.generate_nomenclature_item_number(db)
+    if form_create.element('#nomenclature_items_item_number'):
+        form_create.element('#nomenclature_items_item_number')['_value'] = default_number
+    
+    # Обработка формы создания
+    if form_create.process(formname='nomenclature_item_create_form', keepvalues=False).accepted:
+        session.flash = 'Позиция номенклатуры успешно создана'
+        redirect(URL('nomenclature_items', 'list'))
+    
+    # Настраиваем стили формы создания
+    if form_create.element('input[type=submit]'):
+        form_create.element('input[type=submit]')['_class'] = 'btn btn-primary btn-block'
+    
+    items = []
+    try:
+        if search_term:
+            items = nomenclature_items_service.search_nomenclature_items(db, search_term)
+        else:
+            items = nomenclature_items_service.get_all_nomenclature_items(db, order_by='created_on')
+        
+        # Проверяем, что items не None
+        if items is None:
+            items = []
+        
+        # Убеждаемся, что items итерируемый (не изменяя его)
+        try:
+            _ = iter(items)
+        except (TypeError, AttributeError):
+            items = []
+            
+    except Exception as e:
+        # В случае ошибки возвращаем пустой список
+        items = []
+        try:
+            import logging
+            logging.error(f"Ошибка загрузки позиций номенклатуры: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+        except:
+            pass
+    
     import breadcrumbs_helper
     breadcrumbs = breadcrumbs_helper.make_breadcrumbs([
         ('Главная', URL('default', 'index')),
@@ -48,9 +102,11 @@ def list():
         items=items,
         search_term=search_term,
         breadcrumbs=breadcrumbs,
+        form_create=form_create,
         form_edit=form_edit,
-        edit_item=edit_item,
         show_edit_panel=show_edit_panel,
+        edit_item=edit_item,
+        default_number=default_number,
     )
 
 
@@ -69,29 +125,14 @@ def view():
     if not item:
         session.flash = 'Позиция номенклатуры не найдена'
         redirect(URL('nomenclature_items', 'list'))
-    # Форма редактирования в панели справа
-    form_edit = SQLFORM(
-        db.nomenclature_items,
-        item_id,
-        submit_button='Сохранить',
-        showid=False,
-        _id='nomenclatureItemEditFormView',
-        _name='nomenclature_item_edit_form_view',
-        _action=URL('nomenclature_items', 'view', args=[item_id]),
-        _method='POST'
-    )
-    if form_edit.process(formname='nomenclature_item_edit_form_view', keepvalues=False).accepted:
-        session.flash = 'Позиция номенклатуры успешно обновлена'
-        redirect(URL('nomenclature_items', 'view', args=[item_id]))
-    if form_edit.element('input[type=submit]'):
-        form_edit.element('input[type=submit]')['_class'] = 'btn btn-primary btn-block'
+    
     import breadcrumbs_helper
     breadcrumbs = breadcrumbs_helper.make_breadcrumbs([
         ('Главная', URL('default', 'index')),
         ('Номенклатура', URL('nomenclature_items', 'list')),
         (item.item_number or f'Позиция #{item.id}', None),
     ])
-    return dict(item=item, form_edit=form_edit, breadcrumbs=breadcrumbs)
+    return dict(item=item, breadcrumbs=breadcrumbs)
 
 
 def create():
@@ -157,7 +198,14 @@ def edit():
     elif form.errors:
         response.flash = 'Исправьте ошибки в форме'
     
-    return dict(form=form, item=item)
+    import breadcrumbs_helper
+    breadcrumbs = breadcrumbs_helper.make_breadcrumbs([
+        ('Главная', URL('default', 'index')),
+        ('Номенклатура', URL('nomenclature_items', 'list')),
+        ('Редактирование', None),
+    ])
+    
+    return dict(form=form, item=item, breadcrumbs=breadcrumbs)
 
 
 def delete():

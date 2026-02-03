@@ -173,6 +173,50 @@ CREATE TABLE nomenclature_items (
 );
 ```
 
+### 11. Таблица parts (части дома)
+
+```sql
+CREATE TABLE parts (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL
+);
+```
+
+### 12. Таблица required_item_templates (шаблоны обязательных позиций)
+
+```sql
+CREATE TABLE required_item_templates (
+    id SERIAL PRIMARY KEY,
+    part_id INTEGER NOT NULL REFERENCES parts(id),
+    name VARCHAR(200) NOT NULL,
+    required_qty DECIMAL(10,2) DEFAULT 1,
+    unit VARCHAR(50) DEFAULT 'шт'
+);
+```
+
+### 13. Таблица required_item_materials (допустимые материалы для обязательной позиции)
+
+```sql
+CREATE TABLE required_item_materials (
+    id SERIAL PRIMARY KEY,
+    required_item_template_id INTEGER NOT NULL REFERENCES required_item_templates(id),
+    nomenclature_id INTEGER NOT NULL REFERENCES nomenclature_items(id)
+);
+```
+
+### 14. Таблица specification_required_items (обязательные позиции в конкретной спецификации)
+
+```sql
+CREATE TABLE specification_required_items (
+    id SERIAL PRIMARY KEY,
+    spec_id INTEGER NOT NULL REFERENCES specifications(id),
+    part_id INTEGER NOT NULL REFERENCES parts(id),
+    template_id INTEGER NOT NULL REFERENCES required_item_templates(id),
+    required_qty DECIMAL(10,2) DEFAULT 0,
+    added_qty DECIMAL(10,2) DEFAULT 0
+);
+```
+
 ## После создания проверьте:
 
 ```sql

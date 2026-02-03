@@ -19,5 +19,6 @@ response.menu = [
     (T('Настройки'), False, '#', [
         (T('Статусы комплектов'), False, URL('complect_statuses', 'list')),
         (T('Статусы проектов'), False, URL('project_statuses', 'list')),
+        (T('Типы позиций номенклатуры'), False, URL('nomenclature_item_types', 'list')),
     ])
 ]

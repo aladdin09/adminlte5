@@ -5706,3 +5706,52 @@ success!
 timestamp: 2026-02-02T23:40:34.557489
 ALTER TABLE "auth_user" ADD "nic" VARCHAR(128) UNIQUE;
 success!
+timestamp: 2026-02-03T14:03:59.004663
+CREATE TABLE "nomenclature_item_types"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(100) UNIQUE,
+    "description" TEXT,
+    "sort_order" INTEGER,
+    "is_active" CHAR(1)
+);
+success!
+timestamp: 2026-02-03T14:03:59.815260
+ALTER TABLE "nomenclature_items" ADD "item_type_id" INTEGER REFERENCES "nomenclature_item_types" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+success!
+timestamp: 2026-02-03T21:06:18.075242
+CREATE TABLE "parts"(
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(200)
+);
+success!
+timestamp: 2026-02-03T21:06:18.267839
+CREATE TABLE "required_item_templates"(
+    "id" SERIAL PRIMARY KEY,
+    "part_id" INTEGER REFERENCES "parts" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "name" VARCHAR(200),
+    "required_qty" NUMERIC(10,2),
+    "unit" VARCHAR(50)
+);
+success!
+timestamp: 2026-02-03T21:09:14.604550
+CREATE TABLE "required_item_materials"(
+    "id" SERIAL PRIMARY KEY,
+    "required_item_template_id" INTEGER REFERENCES "required_item_templates" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "nomenclature_id" INTEGER REFERENCES "nomenclature_items" ("id") ON DELETE CASCADE ON UPDATE CASCADE  
+);
+success!
+timestamp: 2026-02-03T21:09:14.699885
+CREATE TABLE "specification_required_items"(
+    "id" SERIAL PRIMARY KEY,
+    "spec_id" INTEGER REFERENCES "specifications" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "part_id" INTEGER REFERENCES "parts" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "template_id" INTEGER REFERENCES "required_item_templates" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "required_qty" NUMERIC(10,2),
+    "added_qty" NUMERIC(10,2)
+);
+success!
+timestamp: 2026-02-03T21:14:25.880985
+ALTER TABLE "specification_items" ADD "part_id" INTEGER REFERENCES "parts" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+timestamp: 2026-02-03T21:14:25.892971
+ALTER TABLE "specification_items" ADD "template_id" INTEGER REFERENCES "required_item_templates" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+success!

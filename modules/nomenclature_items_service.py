@@ -9,7 +9,8 @@ from datetime import datetime
 def create_nomenclature_item(db, item_number, item_date=None,
                         total_cost=0,
                         description=None,
-                        unit='шт'):
+                        unit='шт',
+                        item_type_id=None):
     """
     Создать новую позицию номенклатуры
     
@@ -34,7 +35,8 @@ def create_nomenclature_item(db, item_number, item_date=None,
             item_date=item_date,
             total_cost=total_cost,
             description=description,
-            unit=(unit or 'шт').strip() or 'шт'
+            unit=(unit or 'шт').strip() or 'шт',
+            item_type_id=item_type_id
         )
         db.commit()
         return {'success': True, 'id': item_id}
@@ -79,23 +81,34 @@ def get_nomenclature_item_by_number(db, item_number):
 
 def get_all_nomenclature_items(db, order_by='created_on'):
     """
-    Получить все позиции номенклатуры
+    Получить все позиции номенклатуры с типами
     
     Args:
         db: объект базы данных
         order_by: поле для сортировки
     
     Returns:
-        Rows: список всех позиций номенклатуры
+        Rows: список всех позиций номенклатуры с данными типов
     """
     try:
         query = db.nomenclature_items.id > 0
         
         if order_by == 'created_on':
-            return db(query).select(orderby=~db.nomenclature_items.created_on)
-        return db(query).select(orderby=db.nomenclature_items[order_by])
+            return db(query).select(
+                db.nomenclature_items.ALL,
+                db.nomenclature_item_types.ALL,
+                left=db.nomenclature_item_types.on(db.nomenclature_items.item_type_id == db.nomenclature_item_types.id),
+                orderby=~db.nomenclature_items.created_on
+            )
+        return db(query).select(
+            db.nomenclature_items.ALL,
+            db.nomenclature_item_types.ALL,
+            left=db.nomenclature_item_types.on(db.nomenclature_items.item_type_id == db.nomenclature_item_types.id),
+            orderby=db.nomenclature_items[order_by]
+        )
     except Exception as e:
-        return db().select(db.nomenclature_items.id)
+        # В случае ошибки возвращаем пустой список
+        return []
 
 
 def update_nomenclature_item(db, item_id, **kwargs):
@@ -116,7 +129,7 @@ def update_nomenclature_item(db, item_id, **kwargs):
             return {'success': False, 'error': 'Позиция номенклатуры не найдена'}
         
         allowed_fields = ['item_number', 'item_date', 
-                         'total_cost', 'description', 'unit']
+                         'total_cost', 'description', 'unit', 'item_type_id']
         update_data = {k: v for k, v in kwargs.items() if k in allowed_fields}
         
         if update_data:
@@ -161,14 +174,20 @@ def search_nomenclature_items(db, search_term):
         search_term: поисковый запрос
     
     Returns:
-        Rows: список найденных позиций номенклатуры
+        Rows: список найденных позиций номенклатуры с данными типов
     """
     try:
         query = (db.nomenclature_items.item_number.contains(search_term)) | \
                 (db.nomenclature_items.description.contains(search_term))
-        return db(query).select(orderby=~db.nomenclature_items.created_on)
+        return db(query).select(
+            db.nomenclature_items.ALL,
+            db.nomenclature_item_types.ALL,
+            left=db.nomenclature_item_types.on(db.nomenclature_items.item_type_id == db.nomenclature_item_types.id),
+            orderby=~db.nomenclature_items.created_on
+        )
     except Exception as e:
-        return db().select(db.nomenclature_items.id)
+        # В случае ошибки возвращаем пустой список
+        return []
 
 
 def generate_nomenclature_item_number(db):
