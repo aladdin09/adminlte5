@@ -113,6 +113,47 @@
 
         <div class="mb-3"><label class="form-label">Название *</label>{{=form_status.custom.widget.name}}</div>
         <div class="mb-3"><label class="form-label">Описание</label>{{=form_status.custom.widget.description}}</div>
+        <div class="mb-3"><label class="form-label">Порядок сортировки</label>{{=form_status.custom.widget.sort_order}}</div>
+        <div class="mb-3">
+            <div class="form-check">
+                {{=form_status.custom.widget.is_active}}
+                <label class="form-check-label">Активен</label>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{=form_status.custom.submit}}
+            <a href="{{=URL('nomenclature_item_types', 'list')}}" class="btn btn-secondary w-100 mt-2">Отмена</a>
+        </div>
+
+        {{=form_status.custom.end}}
+    </div>
+</div>
+{{pass}}
+
+{{if form_edit:}}
+<div class="item-type-sidebar" id="itemTypeEditSidebar">
+    <div class="sidebar-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-white"><i class="bi bi-pencil me-2"></i> Редактирование типа</h5>
+        <a href="{{=URL('nomenclature_item_types', 'list')}}" class="btn btn-light btn-sm"><i class="bi bi-x-lg"></i></a>
+    </div>
+
+    <div class="sidebar-body">
+        {{=form_edit.custom.begin}}
+
+        {{if form_edit.errors:}}
+            <div class="alert alert-danger">
+                <strong>Ошибки:</strong>
+                <ul class="mb-0">
+                    {{for field, error in form_edit.errors.items():}}
+                        <li>{{=field}}: {{=error}}</li>
+                    {{pass}}
+                </ul>
+            </div>
+        {{pass}}
+
+        <div class="mb-3"><label class="form-label">Название *</label>{{=form_edit.custom.widget.name}}</div>
+        <div class="mb-3"><label class="form-label">Описание</label>{{=form_edit.custom.widget.description}}</div>
         <div class="mb-3"><label class="form-label">Порядок сортировки</label>{{=form_edit.custom.widget.sort_order}}</div>
         <div class="mb-3">
             <div class="form-check">
@@ -129,7 +170,7 @@
         {{=form_edit.custom.end}}
     </div>
 </div>
-{{pass}}   <!-- ← ЭТО ЗАКРЫВАЕТ {{if form_edit:}} -->
+{{pass}}
 
 <script>
 function openSidebar() { 

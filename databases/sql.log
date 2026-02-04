@@ -5755,3 +5755,42 @@ ALTER TABLE "specification_items" ADD "part_id" INTEGER REFERENCES "parts" ("id"
 timestamp: 2026-02-03T21:14:25.892971
 ALTER TABLE "specification_items" ADD "template_id" INTEGER REFERENCES "required_item_templates" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
 success!
+timestamp: 2026-02-04T00:08:31.300890
+ALTER TABLE "specification_required_items" ADD "nomenclature_id" INTEGER REFERENCES "nomenclature_items" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ;
+success!
+timestamp: 2026-02-04T13:07:08.837850
+ALTER TABLE "specification_required_items" DROP COLUMN "nomenclature_id";
+success!
+timestamp: 2026-02-04T13:53:09.619691
+CREATE TABLE "commercial_proposals"(
+    "id" SERIAL PRIMARY KEY,
+    "specification_id" INTEGER REFERENCES "specifications" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "customer_id" INTEGER REFERENCES "customers" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "proposal_number" VARCHAR(50) UNIQUE,
+    "proposal_date" DATE,
+    "total_amount" NUMERIC(10,2),
+    "description" TEXT,
+    "status" VARCHAR(50),
+    "created_on" TIMESTAMP,
+    "modified_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-04T13:53:12.411258
+CREATE TABLE "commercial_proposal_items"(
+    "id" SERIAL PRIMARY KEY,
+    "proposal_id" INTEGER REFERENCES "commercial_proposals" ("id") ON DELETE CASCADE ON UPDATE CASCADE  ,
+    "item_name" VARCHAR(200),
+    "quantity" NUMERIC(10,2),
+    "unit" VARCHAR(50),
+    "price" NUMERIC(10,2),
+    "total" NUMERIC(10,2),
+    "description" TEXT,
+    "created_on" TIMESTAMP
+);
+success!
+timestamp: 2026-02-04T13:59:58.755072
+ALTER TABLE "commercial_proposals" ADD "pdf_path" VARCHAR(500);
+success!
+timestamp: 2026-02-04T14:49:36.099105
+ALTER TABLE "commercial_proposal_items" ADD "item_type_name" VARCHAR(100);
+success!

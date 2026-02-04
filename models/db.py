@@ -599,6 +599,35 @@ db.define_table('specification_required_items',
     format='%(id)s'
 )
 
+# Таблица: Коммерческие предложения (КП)
+db.define_table('commercial_proposals',
+    Field('specification_id', 'reference specifications', required=True, label='Спецификация'),
+    Field('customer_id', 'reference customers', required=True, label='Клиент'),
+    Field('proposal_number', 'string', length=50, unique=True, required=True, label='Номер КП'),
+    Field('proposal_date', 'date', default=request.now.date(), label='Дата формирования КП'),
+    Field('total_amount', 'decimal(10,2)', default=0, label='Общая сумма'),
+    Field('description', 'text', label='Описание КП'),
+    Field('status', 'string', length=50, default='draft', label='Статус КП'),  # draft, sent, accepted, rejected
+    Field('pdf_path', 'string', length=500, label='Путь к PDF файлу'),
+    Field('created_on', 'datetime', default=request.now, writable=False, readable=True),
+    Field('modified_on', 'datetime', default=request.now, update=request.now, writable=False, readable=True),
+    format='%(proposal_number)s'
+)
+
+# Таблица: Позиции коммерческого предложения
+db.define_table('commercial_proposal_items',
+    Field('proposal_id', 'reference commercial_proposals', required=True, label='КП'),
+    Field('item_type_name', 'string', length=100, default='', label='Тип позиции'),
+    Field('item_name', 'string', length=200, required=True, label='Название позиции'),
+    Field('quantity', 'decimal(10,2)', default=1, label='Количество'),
+    Field('unit', 'string', length=50, default='шт', label='Единица измерения'),
+    Field('price', 'decimal(10,2)', default=0, label='Цена за единицу'),
+    Field('total', 'decimal(10,2)', default=0, label='Итого'),
+    Field('description', 'text', label='Описание'),
+    Field('created_on', 'datetime', default=request.now, writable=False, readable=True),
+    format='%(item_name)s'
+)
+
 # Ссылка позиции спецификации на номенклатуру (поле остаётся integer, валидатор проверяет наличие в nomenclature_items)
 db.specification_items.nomenclature_item_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.nomenclature_items.id, '%(item_number)s'))
 db.specification_items.part_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.parts.id, '%(name)s'))
@@ -610,6 +639,11 @@ db.required_item_materials.nomenclature_id.requires = IS_IN_DB(db, db.nomenclatu
 db.specification_required_items.spec_id.requires = IS_IN_DB(db, db.specifications.id, '%(id)s')
 db.specification_required_items.part_id.requires = IS_IN_DB(db, db.parts.id, '%(name)s')
 db.specification_required_items.template_id.requires = IS_IN_DB(db, db.required_item_templates.id, '%(name)s')
+db.commercial_proposals.specification_id.requires = IS_IN_DB(db, db.specifications.id, '%(id)s')
+db.commercial_proposals.customer_id.requires = IS_IN_DB(db, db.customers.id, '%(name)s')
+db.commercial_proposal_items.proposal_id.requires = IS_IN_DB(db, db.commercial_proposals.id, '%(proposal_number)s')
+db.commercial_proposal_items.quantity.requires = IS_FLOAT_IN_RANGE(0.01, 1000000)
+db.commercial_proposal_items.price.requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0, 10000000))
 
 # -------------------------------------------------------------------------
 # Индексы для оптимизации запросов
