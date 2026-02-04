@@ -160,6 +160,32 @@ psql -h localhost -U smetadoma -d smetadoma_db -c "SELECT version();"
 psql -h localhost -U smetadoma -d smetadoma_db -c "SELECT current_user, current_database();"
 ```
 
+## Миграция: добавление столбца middle_name в customers
+
+Если при добавлении клиента возникает ошибка `column "middle_name" of relation "customers" does not exist`, выполните:
+
+```bash
+psql -h localhost -U smetadoma02 -d smetadoma02_db -c "ALTER TABLE customers ADD COLUMN IF NOT EXISTS middle_name VARCHAR(200);"
+```
+
+Или в psql:
+```sql
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS middle_name VARCHAR(200);
+```
+
+При ошибке про столбец `comments` или другие недостающие столбцы выполните полную миграцию:
+```bash
+psql -h localhost -U smetadoma02 -d smetadoma02_db -f migrations/add_customers_middle_name.sql
+```
+Или по одному:
+```sql
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS last_name VARCHAR(200);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS full_name VARCHAR(600);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS comments TEXT;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS lead_source_id INTEGER;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS link VARCHAR(500);
+```
+
 ## Полезные команды в psql
 
 ```
