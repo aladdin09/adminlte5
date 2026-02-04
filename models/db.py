@@ -394,6 +394,7 @@ db.define_table('customers',
     Field('phone', 'string', length=50, required=True, label='Телефон'),
     Field('email', 'string', length=100, label='Email'),
     Field('address', 'text', required=True, label='Адрес'),
+    Field('lead_source_id', 'reference lead_sources', label='Источник лида'),
     Field('link', 'string', length=500, label='Ссылка'),
     Field('notes', 'text', label='Примечания'),
     Field('comments', 'text', label='Комментарии'),
@@ -674,6 +675,7 @@ db.branches.email.requires = IS_EMPTY_OR(IS_EMAIL())
 # -------------------------------------------------------------------------
 db.customers.email.requires = IS_EMPTY_OR(IS_EMAIL())
 db.customers.phone.requires = IS_MATCH('^[\d\s\-\+\(\)]+$', error_message='Неверный формат телефона')
+db.customers.lead_source_id.requires = IS_EMPTY_OR(IS_IN_DB(db, db.lead_sources.id, '%(name)s'))
 db.specifications.execution_time.requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 1000))
 db.specification_items.quantity.requires = IS_FLOAT_IN_RANGE(0.01, 1000000)
 db.specification_items.price.requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0, 10000000))

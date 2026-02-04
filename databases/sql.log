@@ -6091,3 +6091,6 @@ CREATE TABLE "commercial_proposal_items"(
     "created_on" TIMESTAMP
 );
 success!
+timestamp: 2026-02-04T18:50:39.805017
+ALTER TABLE "customers" DROP COLUMN "lead_source_id";
+success!
